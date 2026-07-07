@@ -1,0 +1,77 @@
+{
+  "posts": [
+    { "url": "https://thmais.com.br/cidades/aracatuba/cotidiano-aracatuba/operacao-noites-frias-pessoas-em-situacao-de-rua-atendidas-pelo-centro-pop-recebem-kits-de-inverno/", "date": "2026-06-15" },
+    { "url": "https://thmais.com.br/cidades/aracatuba/policia-aracatuba/gaeco-deflagra-operacao-torneira-contra-trafico-de-drogas-e-lavagem-de-r-230-milhoes/", "date": "2026-06-16" },
+    { "url": "https://thmais.com.br/cidades/inscricoes-para-o-1o-festival-da-pizza-de-aracatuba-sao-prorrogadas-ate-21-de-junho/", "date": "2026-06-17" },
+    { "url": "https://thmais.com.br/cidades/aracatuba/medico-e-perseguido-por-motociclista-em-tentativa-de-roubo-a-mao-armada/", "date": "2026-06-18" },
+    { "url": "https://thmais.com.br/cidades/aracatuba/aracatuba-tera-telao-na-praca-olimpica-para-o-jogo-do-brasil-contra-o-haiti/", "date": "2026-06-19" },
+    { "url": "https://thmais.com.br/cidades/aracatuba/policia-aracatuba/mulher-pega-quase-48-anos-por-tentar-matar-ex-companheira-e-enteada-a-facadas/", "date": "2026-06-20" },
+    { "url": "https://thmais.com.br/cidades/aracatuba/policia-aracatuba/recem-nascida-morre-durante-parto-domiciliar-em-aracatuba/", "date": "2026-06-21" },
+    { "url": "https://thmais.com.br/cidades/aracatuba/policia-aracatuba/casal-morre-em-colisao-entre-carro-e-caminhao-em-vicinal/", "date": "2026-06-22" },
+    { "url": "https://thmais.com.br/cidades/aracatuba/operacao-desmantela-quadrilha-que-desviava-maquinas-de-cartao-para-o-jogo-do-bicho-e-golpes/", "date": "2026-06-23" },
+    { "url": "https://thmais.com.br/cidades/aracatuba/justica-condena-aracatuba-a-pagar-r-15-mil-por-lesao-em-crianca-durante-aplicacao-de-injecao-no-ps/", "date": "2026-06-24" },
+    { "url": "https://thmais.com.br/noticias/medico-afastado-acusa-santa-casa-de-gestao-temeraria-e-faz-denuncia-ao-mp/", "date": "2026-06-25" },
+    { "url": "https://thmais.com.br/cidades/aracatuba/unimed-aracatuba-amplia-servicos-digitais-e-disponibiliza-emissao-de-boletos-pelo-whatsapp/", "date": "2026-06-26" },
+    { "url": "https://thmais.com.br/cidades/aracatuba/cultura-aracatuba/segunda-edicao-do-flashback-acontece-neste-domingo-na-praca-getulio-vargas/", "date": "2026-06-27" },
+    { "url": "https://thmais.com.br/cidades/aracatuba/prefeitura-de-aracatuba-prorroga-prazo-para-familias-pre-selecionadas-no-minha-casa-minha-vida/", "date": "2026-06-28" },
+    { "url": "https://thmais.com.br/cidades/aracatuba/cultura-aracatuba/mosaico-de-inverno-levara-arte-musica-e-danca-a-diferentes-regioes-de-aracatuba/", "date": "2026-06-29" },
+    { "url": "https://thmais.com.br/cidades/prefeitura-promove-seletivo-com-mais-de-300-vagas-em-rio-preto/", "date": "2026-06-30" },
+    { "url": "https://thmais.com.br/cidades/prefeitura-de-andradina-abre-concurso-publico-com-salarios-de-ate-r-65-mil/", "date": "2026-07-01" },
+    { "url": "https://thmais.com.br/cidades/aracatuba/policia-aracatuba/idosa-de-75-anos-morre-em-colisao-com-carreta-bitrem-na-sp-543/", "date": "2026-07-02" },
+    { "url": "https://thmais.com.br/cidades/aracatuba/aracatuba-convida-torcida-para-mais-uma-edicao-da-copa-na-praca-neste-domingo/", "date": "2026-07-03" }
+  ],
+  "ads": [
+    {
+      "id": "seguranca-viaria",
+      "label": "Segurança Viária",
+      "width": 970,
+      "height": 250,
+      "queryParams": {
+        "google_preview": "ni851HEVy8QY65O00gYw66_p2QaIAYCAgJCx7o2wugA",
+        "iu": "19028704",
+        "gdfp_req": "1",
+        "lineItemId": "7351571428",
+        "creativeId": "138565987748"
+      },
+      "startDate": "2026-06-25",
+      "endDate": "2026-07-03"
+    },
+    {
+      "id": "balanco",
+      "label": "Balanço",
+      "width": 970,
+      "height": 250,
+      "queryParams": {
+        "google_preview": "7bW_Phi4mHcYj5i00gYwj7Tp2QaIAYCAgJC5wKf6FQ",
+        "iu": "19028704",
+        "gdfp_req": "1",
+        "lineItemId": "7347874701",
+        "creativeId": "138564173666"
+      },
+      "startDate": "2026-06-24",
+      "endDate": "2026-07-03"
+    },
+    {
+      "id": "ssp",
+      "label": "SSP",
+      "width": 970,
+      "height": 250,
+      "queryParams": {
+        "google_preview": "JkvDXt2FCrwYoZ200gYwobnp2QaIAYCAgJCx7o-1cA",
+        "iu": "19028704",
+        "gdfp_req": "1",
+        "lineItemId": "7340834782",
+        "creativeId": "138562774820"
+      },
+      "startDate": "2026-06-15",
+      "endDate": "2026-06-30"
+    }
+  ],
+  "outputDir": "./screenshots",
+  "format": "png",
+  "timeout": 30000,
+  "pollTimeout": 15000,
+  "viewport": { "width": 1920, "height": 1080 },
+  "concurrency": 3,
+  "sizeTolerance": 0
+}
