@@ -6,6 +6,7 @@ export interface Post {
 export interface Ad {
   id: string;
   label: string;
+  viewport: { width: number; height: number };
   width: number;
   height: number;
   queryParams: Record<string, string>;
@@ -23,6 +24,7 @@ export interface Config {
   viewport: { width: number; height: number };
   concurrency: number;
   sizeTolerance: number;
+  headless: boolean;
 }
 
 export interface CaptureJob {

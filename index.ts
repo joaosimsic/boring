@@ -36,7 +36,7 @@ async function main() {
   console.log(`Found ${jobs.length} capture job(s):\n`);
 
   for (const job of jobs) {
-    const outputPath = buildOutputPath(job, config, new Date());
+    const outputPath = buildOutputPath(job, config);
     console.log(`  ${job.ad.label} → ${job.url}`);
     console.log(`    output: ${outputPath}`);
   }

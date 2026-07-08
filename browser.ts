@@ -2,10 +2,10 @@ import { chromium, type Browser } from "playwright";
 
 let browser: Browser | null = null;
 
-export async function getBrowser(): Promise<Browser> {
+export async function getBrowser(headless: boolean = true): Promise<Browser> {
   if (!browser) {
     browser = await chromium.launch({
-      headless: true,
+      headless,
       args: ["--no-sandbox", "--disable-setuid-sandbox"],
     });
   }

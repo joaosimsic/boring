@@ -12,6 +12,7 @@ const ads: Ad[] = [
   {
     id: "bmw-leaderboard",
     label: "BMW Leaderboard",
+    viewport: { width: 1920, height: 1080 },
     width: 728,
     height: 90,
     queryParams: { campaign: "bmw", ad_type: "leaderboard" },
@@ -21,6 +22,7 @@ const ads: Ad[] = [
   {
     id: "audi-sidebar",
     label: "Audi Sidebar",
+    viewport: { width: 1920, height: 1080 },
     width: 300,
     height: 250,
     queryParams: { campaign: "audi" },

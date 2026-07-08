@@ -24,10 +24,11 @@
     {
       "id": "seguranca-viaria",
       "label": "Segurança Viária",
+      "viewport": { "width": 1920, "height": 1080 },
       "width": 970,
       "height": 250,
       "queryParams": {
-        "google_preview": "ni851HEVy8QY65O00gYw66_p2QaIAYCAgJCx7o2wugA",
+        "google_preview": "SNnC7H79E-kYx-y40gYwx4ju2QaIAYCAgJCx4fabmgE",
         "iu": "19028704",
         "gdfp_req": "1",
         "lineItemId": "7351571428",
@@ -39,6 +40,7 @@
     {
       "id": "balanco",
       "label": "Balanço",
+      "viewport": { "width": 1920, "height": 1080 },
       "width": 970,
       "height": 250,
       "queryParams": {
@@ -54,6 +56,7 @@
     {
       "id": "ssp",
       "label": "SSP",
+      "viewport": { "width": 1920, "height": 1080 },
       "width": 970,
       "height": 250,
       "queryParams": {
@@ -70,8 +73,9 @@
   "outputDir": "./screenshots",
   "format": "png",
   "timeout": 30000,
-  "pollTimeout": 15000,
+  "pollTimeout": 5000,
   "viewport": { "width": 1920, "height": 1080 },
   "concurrency": 3,
-  "sizeTolerance": 0
+  "sizeTolerance": 0,
+  "headless": true
 }

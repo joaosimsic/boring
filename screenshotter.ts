@@ -11,9 +11,9 @@ export function buildOutputPath(job: CaptureJob, config: Config): string {
 
 export async function captureJob(job: CaptureJob, config: Config): Promise<CaptureResult> {
   const timestamp = new Date().toISOString();
-  const browser = await getBrowser();
+  const browser = await getBrowser(config.headless);
   const context = await browser.newContext({
-    viewport: config.viewport,
+    viewport: job.ad.viewport,
     userAgent:
       "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36",
   });
@@ -31,10 +31,38 @@ export async function captureJob(job: CaptureJob, config: Config): Promise<Captu
 
     console.log(`  → navigating to ${job.post.url.split("/").pop()}`);
     await page.goto(job.url, { waitUntil: "domcontentloaded", timeout: config.timeout });
+    await page.waitForLoadState("load", { timeout: config.timeout }).catch(() => {});
 
-    console.log(`  → waiting for GPT event (${job.ad.width}x${job.ad.height})`);
+    // incremental auto-scroll to trigger all lazy-loaded content
+    console.log(`  → auto-scrolling page`);
+    await page.evaluate(async () => {
+      await new Promise<void>((resolve) => {
+        let maxScroll = document.body.scrollHeight;
+        const step = 400;
+        const timer = setInterval(() => {
+          window.scrollBy(0, step);
+          const cur = window.scrollY + window.innerHeight;
+          const sh = document.body.scrollHeight;
+          if (cur >= maxScroll && sh <= maxScroll + 50) {
+            clearInterval(timer);
+            resolve();
+          }
+          if (sh > maxScroll) maxScroll = sh;
+        }, 200);
+      });
+    });
+    await page.waitForTimeout(500);
+
+    // scroll back to top for full-page screenshot
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await page.waitForTimeout(300);
+
+    console.log(`  → waiting ${config.pollTimeout}ms for GPT event (${job.ad.width}x${job.ad.height})`);
+
+    await page.waitForTimeout(config.pollTimeout);
+
     try {
-      await page.waitForFunction(
+      eventReceived = await page.evaluate(
         (opts: { width: number; height: number; tolerance: number }) => {
           const events = (window as any).__gptEvents ?? [];
           return events.some(
@@ -45,11 +73,12 @@ export async function captureJob(job: CaptureJob, config: Config): Promise<Captu
           );
         },
         { width: job.ad.width, height: job.ad.height, tolerance: config.sizeTolerance },
-        { timeout: config.pollTimeout, polling: 200 },
       );
-      eventReceived = true;
+    } catch {}
+
+    if (eventReceived) {
       console.log(`  ✓ GPT event received`);
-    } catch {
+    } else {
       try {
         gptPresent = await page.evaluate(
           () =>
@@ -58,6 +87,11 @@ export async function captureJob(job: CaptureJob, config: Config): Promise<Captu
         );
       } catch {}
       console.log(`  ⚠ GPT event timeout (gptPresent: ${gptPresent})`);
+    }
+
+    if (eventReceived) {
+      console.log(`  → waiting for ad creative to render`);
+      await page.waitForTimeout(1000);
     }
 
     console.log(`  → taking screenshot`);
