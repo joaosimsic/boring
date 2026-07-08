@@ -24,6 +24,7 @@ export interface Config {
   viewport: { width: number; height: number };
   concurrency: number;
   sizeTolerance: number;
+  compression: number;
   headless: boolean;
 }
 

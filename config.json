@@ -77,5 +77,6 @@
   "viewport": { "width": 1920, "height": 1080 },
   "concurrency": 3,
   "sizeTolerance": 0,
+  "compression": 5,
   "headless": true
 }

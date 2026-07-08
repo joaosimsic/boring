@@ -17,6 +17,7 @@ export async function loadConfig(path: string = "./config.json"): Promise<Config
     viewport: (raw.viewport as Config["viewport"] | undefined) ?? { width: 1920, height: 1080 },
     concurrency: (raw.concurrency as number | undefined) ?? 3,
     sizeTolerance: (raw.sizeTolerance as number | undefined) ?? 0,
+    compression: (raw.compression as number | undefined) ?? 5,
     headless: (raw.headless as boolean | undefined) ?? true,
   };
 

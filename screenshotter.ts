@@ -3,6 +3,7 @@ import path from "node:path";
 import type { Config, CaptureJob, CaptureResult } from "./types";
 import { GPT_INJECT_SCRIPT } from "./inject";
 import { getBrowser } from "./browser";
+import sharp from "sharp";
 
 export function buildOutputPath(job: CaptureJob, config: Config): string {
   const [yyyy, mm, dd] = job.post.date.split("-");
@@ -96,7 +97,13 @@ export async function captureJob(job: CaptureJob, config: Config): Promise<Captu
 
     console.log(`  → taking screenshot`);
     const format = config.format === "jpeg" ? "jpeg" : "png";
-    const screenshotBuffer = await page.screenshot({ fullPage: true, type: format });
+    let screenshotBuffer = await page.screenshot({ fullPage: true, type: format });
+
+    if (config.compression > 0) {
+      screenshotBuffer = await sharp(screenshotBuffer)
+        .png({ compressionLevel: Math.min(config.compression, 9) })
+        .toBuffer();
+    }
 
     const outputPath = buildOutputPath(job, config);
     await mkdir(path.dirname(outputPath), { recursive: true });

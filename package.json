@@ -1,15 +1,21 @@
 {
   "name": "boring",
+  "bin": "./index.ts",
   "module": "index.ts",
   "type": "module",
+  "scripts": {
+    "start": "bun run index.ts"
+  },
   "private": true,
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "@types/sharp": "^0.32.0"
   },
   "peerDependencies": {
     "typescript": "^5"
   },
   "dependencies": {
-    "playwright": "^1.61.1"
+    "playwright": "^1.61.1",
+    "sharp": "^0.35.3"
   }
 }

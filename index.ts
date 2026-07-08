@@ -1,3 +1,5 @@
+#!/usr/bin/env bun
+
 import { loadConfig } from "./config";
 import { matchAds } from "./matcher";
 import { buildOutputPath, processJobs } from "./screenshotter";
