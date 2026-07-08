@@ -73,7 +73,14 @@ async function main() {
   await Bun.write(summaryPath, JSON.stringify(summary, null, 2));
   console.log(`\nDone. Summary written to ${summaryPath}`);
 
+  const adIds = [...new Set(jobs.map((j) => j.ad.id))];
+  for (const id of adIds) {
+    console.log(`  → zipping ${id} → ${config.outputDir}/${id}.zip`);
+    await Bun.$`cd ${config.outputDir} && zip -r ${id}.zip ${id}`.quiet();
+  }
+
   await closeBrowser();
+  process.exit(0);
 }
 
 main().catch((err) => {

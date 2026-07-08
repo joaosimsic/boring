@@ -1,6 +1,6 @@
 # AdMatch Screenshot Tool
 
-Capture viewport screenshots of every valid (post, ad) pair. Each screenshot captures the post page with ad-specific query params appended, showing the ad rendered in context.
+Capture full-page screenshots of every valid (post, ad) pair. Each job navigates to the post URL with ad-specific query params, waits for the GPT `slotRenderEnded` event, and captures a full-page screenshot.
 
 ## Usage
 
@@ -30,32 +30,45 @@ bun index.ts --output ./my-screenshots
 | Field | Type | Default | Description |
 |---|---|---|---|
 | `posts` | `{ url, date }[]` | — | Post URLs and their publication dates |
-| `ads` | `{ id, label, width, height, queryParams, startDate, endDate }[]` | — | Ad configurations |
+| `ads` | `Ad[]` | — | Ad configurations (see below) |
 | `outputDir` | string | `./screenshots` | Screenshot output directory |
-| `format` | `png` | `jpeg` | `png` | Screenshot format |
+| `format` | `png` \| `jpeg` | `png` | Screenshot image format |
 | `timeout` | number | `30000` | Max ms per page load |
 | `pollTimeout` | number | `15000` | Max ms to wait for GPT `slotRenderEnded` event |
-| `viewport` | `{ width, height }` | `{ 1920, 1080 }` | Viewport dimensions |
+| `viewport` | `{ width, height }` | `{ 1920, 1080 }` | Default viewport dimensions |
 | `concurrency` | number | `3` | Number of parallel capture jobs |
 | `sizeTolerance` | number | `0` | Px tolerance for ad size matching |
+| `compression` | number (0–9) | `5` | PNG compression level (0 disables re-compression) |
+| `headless` | boolean | `true` | Run browser in headless mode |
 
 `sizeTolerance` can be overridden at runtime via `AD_SIZE_TOLERANCE` env var.
+
+### Per-ad Fields
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `id` | string | Yes | Ad identifier; used as directory and zip filename |
+| `label` | string | Yes | Human-readable label for console output |
+| `viewport` | `{ width, height }` | No | Per-ad viewport override (falls back to global) |
+| `width` | number | Yes | Expected ad width in pixels |
+| `height` | number | Yes | Expected ad height in pixels |
+| `queryParams` | `Record<string, string>` | Yes | Query params appended to post URL |
+| `startDate` | string (YYYY-MM-DD) | Yes | First date this ad is valid |
+| `endDate` | string (YYYY-MM-DD) | Yes | Last date this ad is valid |
 
 ## Output Structure
 
 ```
 screenshots/
-  example.com/
-    sports/
-      article-1/
-        bmw-leaderboard/
-          2026-07-07/
-            143022.png
+  <ad-id>/
+    <dd>-<mm>-<yyyy>.<format>
+  summary.json
+  <ad-id>.zip
 ```
 
-Path template: `{outputDir}/{host}/{path-segments}/{ad-id}/{capture-date}/{capture-time}.{format}`
+Path template: `{outputDir}/{ad-id}/{dd}-{mm}-{yyyy}.{format}`
 
-A `summary.json` is written at the output root listing all capture jobs and their outcomes.
+A `summary.json` is written at the output root listing all capture jobs and their outcomes. A `.zip` archive is also created per ad ID.
 
 ## Edge Cases
 
