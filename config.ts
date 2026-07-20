@@ -18,6 +18,7 @@ export async function loadConfig(path: string = "./config.json"): Promise<Config
     concurrency: (raw.concurrency as number | undefined) ?? 3,
     sizeTolerance: (raw.sizeTolerance as number | undefined) ?? 0,
     compression: (raw.compression as number | undefined) ?? 5,
+    jpegQuality: (raw.jpegQuality as number | undefined) ?? 80,
     headless: (raw.headless as boolean | undefined) ?? true,
   };
 

@@ -1,82 +1,47 @@
 {
   "posts": [
-    { "url": "https://thmais.com.br/cidades/aracatuba/cotidiano-aracatuba/operacao-noites-frias-pessoas-em-situacao-de-rua-atendidas-pelo-centro-pop-recebem-kits-de-inverno/", "date": "2026-06-15" },
-    { "url": "https://thmais.com.br/cidades/aracatuba/policia-aracatuba/gaeco-deflagra-operacao-torneira-contra-trafico-de-drogas-e-lavagem-de-r-230-milhoes/", "date": "2026-06-16" },
-    { "url": "https://thmais.com.br/cidades/inscricoes-para-o-1o-festival-da-pizza-de-aracatuba-sao-prorrogadas-ate-21-de-junho/", "date": "2026-06-17" },
-    { "url": "https://thmais.com.br/cidades/aracatuba/medico-e-perseguido-por-motociclista-em-tentativa-de-roubo-a-mao-armada/", "date": "2026-06-18" },
-    { "url": "https://thmais.com.br/cidades/aracatuba/aracatuba-tera-telao-na-praca-olimpica-para-o-jogo-do-brasil-contra-o-haiti/", "date": "2026-06-19" },
-    { "url": "https://thmais.com.br/cidades/aracatuba/policia-aracatuba/mulher-pega-quase-48-anos-por-tentar-matar-ex-companheira-e-enteada-a-facadas/", "date": "2026-06-20" },
-    { "url": "https://thmais.com.br/cidades/aracatuba/policia-aracatuba/recem-nascida-morre-durante-parto-domiciliar-em-aracatuba/", "date": "2026-06-21" },
-    { "url": "https://thmais.com.br/cidades/aracatuba/policia-aracatuba/casal-morre-em-colisao-entre-carro-e-caminhao-em-vicinal/", "date": "2026-06-22" },
-    { "url": "https://thmais.com.br/cidades/aracatuba/operacao-desmantela-quadrilha-que-desviava-maquinas-de-cartao-para-o-jogo-do-bicho-e-golpes/", "date": "2026-06-23" },
-    { "url": "https://thmais.com.br/cidades/aracatuba/justica-condena-aracatuba-a-pagar-r-15-mil-por-lesao-em-crianca-durante-aplicacao-de-injecao-no-ps/", "date": "2026-06-24" },
-    { "url": "https://thmais.com.br/noticias/medico-afastado-acusa-santa-casa-de-gestao-temeraria-e-faz-denuncia-ao-mp/", "date": "2026-06-25" },
-    { "url": "https://thmais.com.br/cidades/aracatuba/unimed-aracatuba-amplia-servicos-digitais-e-disponibiliza-emissao-de-boletos-pelo-whatsapp/", "date": "2026-06-26" },
-    { "url": "https://thmais.com.br/cidades/aracatuba/cultura-aracatuba/segunda-edicao-do-flashback-acontece-neste-domingo-na-praca-getulio-vargas/", "date": "2026-06-27" },
-    { "url": "https://thmais.com.br/cidades/aracatuba/prefeitura-de-aracatuba-prorroga-prazo-para-familias-pre-selecionadas-no-minha-casa-minha-vida/", "date": "2026-06-28" },
-    { "url": "https://thmais.com.br/cidades/aracatuba/cultura-aracatuba/mosaico-de-inverno-levara-arte-musica-e-danca-a-diferentes-regioes-de-aracatuba/", "date": "2026-06-29" },
-    { "url": "https://thmais.com.br/cidades/prefeitura-promove-seletivo-com-mais-de-300-vagas-em-rio-preto/", "date": "2026-06-30" },
-    { "url": "https://thmais.com.br/cidades/prefeitura-de-andradina-abre-concurso-publico-com-salarios-de-ate-r-65-mil/", "date": "2026-07-01" },
-    { "url": "https://thmais.com.br/cidades/aracatuba/policia-aracatuba/idosa-de-75-anos-morre-em-colisao-com-carreta-bitrem-na-sp-543/", "date": "2026-07-02" },
-    { "url": "https://thmais.com.br/cidades/aracatuba/aracatuba-convida-torcida-para-mais-uma-edicao-da-copa-na-praca-neste-domingo/", "date": "2026-07-03" }
+    { "url": "https://thmais.com.br/cidades/campinas/centro-de-convivencia-tera-novo-espaco-gastronomico-prefeitura-de-campinas-abre-licitacao/", "date": "2026-06-27" },
+    { "url": "https://thmais.com.br/cidades/campinas/feirao-da-casa-propria-carta-de-credito/", "date": "2026-06-28" },
+    { "url": "https://thmais.com.br/cidades/campinas/mulher-e-esfaqueada-pelo-marido-durante-briga-em-campinas/", "date": "2026-06-29" },
+    { "url": "https://thmais.com.br/cidades/campinas/gcm-resgata-ratao-do-banhado-em-cordeiropolis/", "date": "2026-06-30" },
+    { "url": "https://thmais.com.br/cidades/campinas/homem-preso-agredir-filha-cabo-rodo-jundia/", "date": "2026-07-01" },
+    { "url": "https://thmais.com.br/cidades/campinas/campinas-reforca-a-importancia-da-vacinacao-contra-sarampo-apos-casos-confirmados-em-sp/", "date": "2026-07-02" },
+    { "url": "https://thmais.com.br/cidades/campinas/policia-campinas/apos-quatro-dias-em-carcere-privado-mulher-consegue-fugir-da-propria-casa-tomada-pelo-ex-companheiro/", "date": "2026-07-03" },
+    { "url": "https://thmais.com.br/cidades/campinas/arena-do-torcedor-transmitira-jogo-do-brasil-pelas-oitavas-de-final-no-taquaral/", "date": "2026-07-04" },
+    { "url": "https://thmais.com.br/cidades/campinas/homem-e-preso-com-mais-de-200-porcoes-de-cocaina-durante-acao-da-gcm-em-piracicaba/", "date": "2026-07-05" },
+    { "url": "https://thmais.com.br/cidades/campinas/dois-homens-foram-presos-por-esquema-de-sorteio-ilegal-com-premio-de-r100-mil/", "date": "2026-07-06" },
+    { "url": "https://thmais.com.br/cidades/campinas/misterio-em-cosmopolis-um-corpo-foi-encontrado-com-as-maos-amarradas-dentro-do-rio-jaguari/", "date": "2026-07-07" },
+    { "url": "https://thmais.com.br/cidades/campinas/apreensao-bebidas-falsas-hortolandia/", "date": "2026-07-08" },
+    { "url": "https://thmais.com.br/cidades/campinas/emdec-alerta-sobre-crime-de-vandalismo-e-pede-apoio-da-populacao/", "date": "2026-07-09" },
+    { "url": "https://thmais.com.br/cidades/campinas/cultura-campinas/o-teatro-magico-apresenta-a-corda-bamba-no-pescoco-11-de-julho-no-brasuca/", "date": "2026-07-10" },
+    { "url": "https://thmais.com.br/noticias/quem-era-o-estudante-que-morreu-no-acidente-com-porsche-em-campinas/", "date": "2026-07-11" }
   ],
   "ads": [
     {
-      "id": "seguranca-viaria",
-      "label": "Segurança Viária",
+      "id": "campinas-252-anos",
+      "label": "campinas-252-anos",
       "viewport": { "width": 1920, "height": 1080 },
-      "width": 970,
+      "width": 300,
       "height": 250,
       "queryParams": {
-        "google_preview": "SNnC7H79E-kYx-y40gYwx4ju2QaIAYCAgJCx4fabmgE",
+        "google_preview": "0dnKmAMHf3MYicPj0gYwid-Y2gaIAYCAgJC5hvGwFQ",
         "iu": "19028704",
         "gdfp_req": "1",
-        "lineItemId": "7351571428",
-        "creativeId": "138565987748"
+        "lineItemId": "7352746503",
+        "creativeId": "138564680193"
       },
-      "startDate": "2026-06-25",
-      "endDate": "2026-07-03"
-    },
-    {
-      "id": "balanco",
-      "label": "Balanço",
-      "viewport": { "width": 1920, "height": 1080 },
-      "width": 970,
-      "height": 250,
-      "queryParams": {
-        "google_preview": "7bW_Phi4mHcYj5i00gYwj7Tp2QaIAYCAgJC5wKf6FQ",
-        "iu": "19028704",
-        "gdfp_req": "1",
-        "lineItemId": "7347874701",
-        "creativeId": "138564173666"
-      },
-      "startDate": "2026-06-24",
-      "endDate": "2026-07-03"
-    },
-    {
-      "id": "ssp",
-      "label": "SSP",
-      "viewport": { "width": 1920, "height": 1080 },
-      "width": 970,
-      "height": 250,
-      "queryParams": {
-        "google_preview": "JkvDXt2FCrwYoZ200gYwobnp2QaIAYCAgJCx7o-1cA",
-        "iu": "19028704",
-        "gdfp_req": "1",
-        "lineItemId": "7340834782",
-        "creativeId": "138562774820"
-      },
-      "startDate": "2026-06-15",
-      "endDate": "2026-06-30"
+      "startDate": "2026-06-29",
+      "endDate": "2026-07-11"
     }
   ],
   "outputDir": "./screenshots",
-  "format": "png",
+  "format": "jpeg",
+  "jpegQuality": 80,
   "timeout": 30000,
   "pollTimeout": 5000,
   "viewport": { "width": 1920, "height": 1080 },
   "concurrency": 3,
   "sizeTolerance": 0,
-  "compression": 5,
+  "compression": 9,
   "headless": true
 }

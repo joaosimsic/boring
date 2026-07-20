@@ -96,13 +96,21 @@ export async function captureJob(job: CaptureJob, config: Config): Promise<Captu
     }
 
     console.log(`  → taking screenshot`);
-    const format = config.format === "jpeg" ? "jpeg" : "png";
-    let screenshotBuffer = await page.screenshot({ fullPage: true, type: format });
+    let screenshotBuffer: Buffer;
 
-    if (config.compression > 0) {
-      screenshotBuffer = await sharp(screenshotBuffer)
-        .png({ compressionLevel: Math.min(config.compression, 9) })
-        .toBuffer();
+    if (config.format === "jpeg") {
+      screenshotBuffer = await page.screenshot({
+        fullPage: true,
+        type: "jpeg",
+        quality: config.jpegQuality,
+      });
+    } else {
+      screenshotBuffer = await page.screenshot({ fullPage: true, type: "png" });
+      if (config.compression > 0) {
+        screenshotBuffer = await sharp(screenshotBuffer)
+          .png({ compressionLevel: Math.min(config.compression, 9) })
+          .toBuffer();
+      }
     }
 
     const outputPath = buildOutputPath(job, config);

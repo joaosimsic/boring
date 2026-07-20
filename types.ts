@@ -25,6 +25,7 @@ export interface Config {
   concurrency: number;
   sizeTolerance: number;
   compression: number;
+  jpegQuality: number;
   headless: boolean;
 }
 
