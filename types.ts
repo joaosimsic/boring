@@ -14,13 +14,27 @@ export interface Ad {
   endDate: string;
 }
 
+export interface DateRange {
+  start: string;
+  end: string;
+}
+
+export interface PostSource {
+  type: "wordpress";
+  apiUrl: string;
+  category: string | string[];
+  dateRange: DateRange;
+  perPage?: number;
+}
+
 export interface Config {
-  posts: Post[];
+  postSource: PostSource;
   ads: Ad[];
   outputDir: string;
   format: "png" | "jpeg";
   timeout: number;
   pollTimeout: number;
+  scrollTimeout: number;
   viewport: { width: number; height: number };
   concurrency: number;
   sizeTolerance: number;
