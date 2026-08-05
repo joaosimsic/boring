@@ -25,6 +25,48 @@ bun index.ts --dry-run
 bun index.ts --output ./my-screenshots
 ```
 
+### Example Config
+
+```json
+{
+  "postSource": {
+    "type": "wordpress",
+    "apiUrl": "https://thmais.com.br/wp-json/wp/v2",
+    "category": "campinas",
+    "dateRange": { "start": "2026-07-01", "end": "2026-07-30" }
+  },
+  "ads": [
+    {
+      "id": "unifunec",
+      "label": "unifunec",
+      "viewport": { "width": 1920, "height": 1080 },
+      "width": 300,
+      "height": 250,
+      "queryParams": {
+        "google_preview": "nwJKqAv49u4Ywe_N0wYwwYuD2waIAYCAgJD5uIOGMA",
+        "iu": "19028704",
+        "gdfp_req": "1",
+        "lineItemId": "7355256627",
+        "creativeId": "138565256007"
+      },
+      "startDate": "2026-07-01",
+      "endDate": "2026-07-30"
+    }
+  ],
+  "outputDir": "./screenshots",
+  "format": "jpeg",
+  "jpegQuality": 80,
+  "timeout": 30000,
+  "pollTimeout": 5000,
+  "scrollTimeout": 20000,
+  "viewport": { "width": 1920, "height": 1080 },
+  "concurrency": 3,
+  "sizeTolerance": 0,
+  "compression": 9,
+  "headless": true
+}
+```
+
 ## Config Reference
 
 | Field | Type | Default | Description |
@@ -33,6 +75,7 @@ bun index.ts --output ./my-screenshots
 | `ads` | `Ad[]` | — | Ad configurations (see below) |
 | `outputDir` | string | `./screenshots` | Screenshot output directory |
 | `format` | `png` \| `jpeg` | `png` | Screenshot image format |
+| `jpegQuality` | number (0–100) | `80` | JPEG quality when `format` is `jpeg` |
 | `timeout` | number | `30000` | Max ms per page load |
 | `pollTimeout` | number | `15000` | Max ms to wait for GPT `slotRenderEnded` event |
 | `scrollTimeout` | number | `20000` | Max ms spent auto-scrolling to trigger lazy-loaded content |
