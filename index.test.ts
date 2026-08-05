@@ -1,6 +1,6 @@
 import { test, expect, describe } from "bun:test";
 import { matchAds } from "./matcher";
-import { buildOutputPath } from "./screenshotter";
+import { buildOutputPath, withTimeout } from "./screenshotter";
 import type { Post, Ad, Config, CaptureJob } from "./types";
 
 const posts: Post[] = [
@@ -32,15 +32,24 @@ const ads: Ad[] = [
 ];
 
 const config: Config = {
-  posts,
+  postSource: {
+    type: "wordpress",
+    apiUrl: "https://example.com/wp-json/wp/v2",
+    category: "news",
+    dateRange: { start: "2026-06-01", end: "2026-07-31" },
+  },
   ads,
   outputDir: "./screenshots",
   format: "png",
   timeout: 30000,
   pollTimeout: 15000,
+  scrollTimeout: 20000,
   viewport: { width: 1920, height: 1080 },
   concurrency: 3,
   sizeTolerance: 0,
+  compression: 5,
+  jpegQuality: 80,
+  headless: true,
 };
 
 describe("matchAds", () => {
@@ -90,5 +99,18 @@ describe("buildOutputPath", () => {
     expect(result).toBe(
       "./screenshots/bmw-leaderboard/15-06-2026.png",
     );
+  });
+});
+
+describe("withTimeout", () => {
+  test("resolves when the promise settles first", async () => {
+    const result = await withTimeout(Promise.resolve(42), 1000, "test");
+    expect(result).toBe(42);
+  });
+
+  test("rejects when the timeout fires first", async () => {
+    const pending = new Promise<never>(() => {});
+    const result = withTimeout(pending, 50, "test");
+    expect(result).rejects.toThrow("test timed out after 50ms");
   });
 });

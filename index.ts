@@ -1,6 +1,7 @@
 #!/usr/bin/env bun
 
 import { loadConfig } from "./config";
+import { fetchPostsFromWordPress } from "./wordpress";
 import { matchAds } from "./matcher";
 import { buildOutputPath, processJobs } from "./screenshotter";
 import { closeBrowser } from "./browser";
@@ -28,7 +29,15 @@ async function main() {
     config.outputDir = outputDir;
   }
 
-  const jobs = matchAds(config.posts, config.ads);
+  console.log(`Fetching posts from ${config.postSource.apiUrl}...`);
+  const posts = await fetchPostsFromWordPress(config.postSource);
+  console.log(`Got ${posts.length} post(s) (one per day):`);
+  for (const post of posts) {
+    console.log(`  ${post.date} ${post.url}`);
+  }
+  console.log("");
+
+  const jobs = matchAds(posts, config.ads);
 
   if (jobs.length === 0) {
     console.log("No matching jobs to process.");

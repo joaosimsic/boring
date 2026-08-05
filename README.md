@@ -29,12 +29,13 @@ bun index.ts --output ./my-screenshots
 
 | Field | Type | Default | Description |
 |---|---|---|---|
-| `posts` | `{ url, date }[]` | — | Post URLs and their publication dates |
+| `postSource` | `{ type, apiUrl, category, dateRange }` | — | Post source configuration (see below) |
 | `ads` | `Ad[]` | — | Ad configurations (see below) |
 | `outputDir` | string | `./screenshots` | Screenshot output directory |
 | `format` | `png` \| `jpeg` | `png` | Screenshot image format |
 | `timeout` | number | `30000` | Max ms per page load |
 | `pollTimeout` | number | `15000` | Max ms to wait for GPT `slotRenderEnded` event |
+| `scrollTimeout` | number | `20000` | Max ms spent auto-scrolling to trigger lazy-loaded content |
 | `viewport` | `{ width, height }` | `{ 1920, 1080 }` | Default viewport dimensions |
 | `concurrency` | number | `3` | Number of parallel capture jobs |
 | `sizeTolerance` | number | `0` | Px tolerance for ad size matching |
@@ -42,6 +43,18 @@ bun index.ts --output ./my-screenshots
 | `headless` | boolean | `true` | Run browser in headless mode |
 
 `sizeTolerance` can be overridden at runtime via `AD_SIZE_TOLERANCE` env var.
+
+### postSource Fields
+
+Posts are fetched from a WordPress site via the REST API (`/wp-json/wp/v2`). One post per day is used (the newest post published that day).
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `type` | `"wordpress"` | Yes | Source type |
+| `apiUrl` | string | Yes | WordPress REST API base URL (e.g. `https://thmais.com.br/wp-json/wp/v2`) |
+| `category` | string \| string[] | Yes | Category slug(s) to filter posts by |
+| `dateRange` | `{ start, end }` | Yes | Fetch only posts published between `start` and `end` (YYYY-MM-DD) |
+| `perPage` | number | No | Posts per API page (default `100`) |
 
 ### Per-ad Fields
 

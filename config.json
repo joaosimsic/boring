@@ -1,37 +1,26 @@
 {
-  "posts": [
-    { "url": "https://thmais.com.br/cidades/campinas/centro-de-convivencia-tera-novo-espaco-gastronomico-prefeitura-de-campinas-abre-licitacao/", "date": "2026-06-27" },
-    { "url": "https://thmais.com.br/cidades/campinas/feirao-da-casa-propria-carta-de-credito/", "date": "2026-06-28" },
-    { "url": "https://thmais.com.br/cidades/campinas/mulher-e-esfaqueada-pelo-marido-durante-briga-em-campinas/", "date": "2026-06-29" },
-    { "url": "https://thmais.com.br/cidades/campinas/gcm-resgata-ratao-do-banhado-em-cordeiropolis/", "date": "2026-06-30" },
-    { "url": "https://thmais.com.br/cidades/campinas/homem-preso-agredir-filha-cabo-rodo-jundia/", "date": "2026-07-01" },
-    { "url": "https://thmais.com.br/cidades/campinas/campinas-reforca-a-importancia-da-vacinacao-contra-sarampo-apos-casos-confirmados-em-sp/", "date": "2026-07-02" },
-    { "url": "https://thmais.com.br/cidades/campinas/policia-campinas/apos-quatro-dias-em-carcere-privado-mulher-consegue-fugir-da-propria-casa-tomada-pelo-ex-companheiro/", "date": "2026-07-03" },
-    { "url": "https://thmais.com.br/cidades/campinas/arena-do-torcedor-transmitira-jogo-do-brasil-pelas-oitavas-de-final-no-taquaral/", "date": "2026-07-04" },
-    { "url": "https://thmais.com.br/cidades/campinas/homem-e-preso-com-mais-de-200-porcoes-de-cocaina-durante-acao-da-gcm-em-piracicaba/", "date": "2026-07-05" },
-    { "url": "https://thmais.com.br/cidades/campinas/dois-homens-foram-presos-por-esquema-de-sorteio-ilegal-com-premio-de-r100-mil/", "date": "2026-07-06" },
-    { "url": "https://thmais.com.br/cidades/campinas/misterio-em-cosmopolis-um-corpo-foi-encontrado-com-as-maos-amarradas-dentro-do-rio-jaguari/", "date": "2026-07-07" },
-    { "url": "https://thmais.com.br/cidades/campinas/apreensao-bebidas-falsas-hortolandia/", "date": "2026-07-08" },
-    { "url": "https://thmais.com.br/cidades/campinas/emdec-alerta-sobre-crime-de-vandalismo-e-pede-apoio-da-populacao/", "date": "2026-07-09" },
-    { "url": "https://thmais.com.br/cidades/campinas/cultura-campinas/o-teatro-magico-apresenta-a-corda-bamba-no-pescoco-11-de-julho-no-brasuca/", "date": "2026-07-10" },
-    { "url": "https://thmais.com.br/noticias/quem-era-o-estudante-que-morreu-no-acidente-com-porsche-em-campinas/", "date": "2026-07-11" }
-  ],
+  "postSource": {
+    "type": "wordpress",
+    "apiUrl": "https://thmais.com.br/wp-json/wp/v2",
+    "category": "campinas",
+    "dateRange": { "start": "2026-07-01", "end": "2026-07-30" }
+  },
   "ads": [
     {
-      "id": "campinas-252-anos",
-      "label": "campinas-252-anos",
+      "id": "unifunec",
+      "label": "unifunec",
       "viewport": { "width": 1920, "height": 1080 },
       "width": 300,
       "height": 250,
       "queryParams": {
-        "google_preview": "0dnKmAMHf3MYicPj0gYwid-Y2gaIAYCAgJC5hvGwFQ",
+        "google_preview": "nwJKqAv49u4Ywe_N0wYwwYuD2waIAYCAgJD5uIOGMA",
         "iu": "19028704",
         "gdfp_req": "1",
-        "lineItemId": "7352746503",
-        "creativeId": "138564680193"
+        "lineItemId": "7355256627",
+        "creativeId": "138565256007"
       },
-      "startDate": "2026-06-29",
-      "endDate": "2026-07-11"
+      "startDate": "2026-07-01",
+      "endDate": "2026-07-30"
     }
   ],
   "outputDir": "./screenshots",
