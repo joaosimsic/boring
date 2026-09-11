@@ -7,7 +7,22 @@ import sharp from "sharp";
 
 export function buildOutputPath(job: CaptureJob, config: Config): string {
   const [yyyy, mm, dd] = job.post.date.split("-");
-  return `${config.outputDir}/${job.ad.id}/${dd}-${mm}-${yyyy}.${config.format}`;
+  const campaign = job.ad.campaign ?? job.ads.find((a) => a.campaign)?.campaign;
+  if (campaign) {
+    const slug = campaign
+      .toLowerCase()
+      .replace(/\s+/g, "-")
+      .replace(/[^a-z0-9-_]/g, "");
+    if (job.ads.length === 1) {
+      const ad = job.ad;
+      return `${config.outputDir}/${slug}/${ad.width}x${ad.height}-${ad.id}-${dd}-${mm}-${yyyy}.${config.format}`;
+    }
+    const ids = job.ads.map((a) => a.id).join("+");
+    const sizes = job.ads.map((a) => `${a.width}x${a.height}`).join("+");
+    return `${config.outputDir}/${slug}/${sizes}-${ids}-${dd}-${mm}-${yyyy}.${config.format}`;
+  }
+  const ids = job.ads?.length ? job.ads.map((a) => a.id).join("+") : job.ad.id;
+  return `${config.outputDir}/${ids}/${dd}-${mm}-${yyyy}.${config.format}`;
 }
 
 export async function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
@@ -25,8 +40,9 @@ export async function withTimeout<T>(promise: Promise<T>, ms: number, label: str
 export async function captureJob(job: CaptureJob, config: Config): Promise<CaptureResult> {
   const timestamp = new Date().toISOString();
   const browser = await getBrowser(config.headless);
+  const viewport = job.ads?.[0]?.viewport ?? job.ad.viewport ?? config.viewport;
   const context = await browser.newContext({
-    viewport: job.ad.viewport,
+    viewport,
     userAgent:
       "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36",
   });
@@ -75,23 +91,29 @@ export async function captureJob(job: CaptureJob, config: Config): Promise<Captu
     await page.evaluate(() => window.scrollTo(0, 0));
     await page.waitForTimeout(300);
 
-    console.log(`  → waiting ${config.pollTimeout}ms for GPT event (${job.ad.width}x${job.ad.height})`);
+    const adDesc = job.ads.map((a) => `${a.width}x${a.height} (${a.id})`).join(", ");
+    console.log(`  → waiting ${config.pollTimeout}ms for GPT events [${adDesc}]`);
 
     await page.waitForTimeout(config.pollTimeout);
 
     try {
+      const creativeIds = job.ads
+        .map((a) => a.queryParams.creativeId)
+        .filter((v): v is string => typeof v === "string" && v.length > 0);
       eventReceived = await withTimeout(
         page.evaluate(
-          (opts: { width: number; height: number; tolerance: number }) => {
+          (opts: { creativeIds: string[] }) => {
             const events = (window as any).__gptEvents ?? [];
-            return events.some(
-              (ev: any) =>
-                ev.size != null &&
-                Math.abs(ev.size[0] - opts.width) <= opts.tolerance &&
-                Math.abs(ev.size[1] - opts.height) <= opts.tolerance,
+            if (opts.creativeIds.length === 0) {
+              return events.some((ev: any) => !ev.isEmpty);
+            }
+            return opts.creativeIds.every((id) =>
+              events.some(
+                (ev: any) => !ev.isEmpty && String(ev.creativeId) === id,
+              ),
             );
           },
-          { width: job.ad.width, height: job.ad.height, tolerance: config.sizeTolerance },
+          { creativeIds },
         ),
         config.timeout,
         "gpt-event-check",
@@ -183,7 +205,8 @@ async function processJobs(
       else fail++;
       const event = result.eventReceived ? "✓" : "⚠";
       const status = result.success ? "OK" : "FAIL";
-      console.log(`  [${done}/${total}] ${status} ${event} ${job.ad.label} → ${result.screenshotPath ?? "n/a"}`);
+      const label = job.ads.map((a) => a.label).join("+");
+      console.log(`  [${done}/${total}] ${status} ${event} ${label} → ${result.screenshotPath ?? "n/a"}`);
     }
   }
 

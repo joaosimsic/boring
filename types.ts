@@ -12,6 +12,7 @@ export interface Ad {
   queryParams: Record<string, string>;
   startDate: string;
   endDate: string;
+  campaign?: string;
 }
 
 export interface DateRange {
@@ -41,12 +42,14 @@ export interface Config {
   compression: number;
   jpegQuality: number;
   headless: boolean;
+  combineMatchingAds?: boolean;
 }
 
 export interface CaptureJob {
   url: string;
   post: Post;
   ad: Ad;
+  ads: Ad[];
 }
 
 export interface CaptureResult {

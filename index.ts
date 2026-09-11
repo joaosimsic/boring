@@ -37,7 +37,7 @@ async function main() {
   }
   console.log("");
 
-  const jobs = matchAds(posts, config.ads);
+  const jobs = matchAds(posts, config.ads, config.combineMatchingAds ?? true);
 
   if (jobs.length === 0) {
     console.log("No matching jobs to process.");
@@ -48,7 +48,8 @@ async function main() {
 
   for (const job of jobs) {
     const outputPath = buildOutputPath(job, config);
-    console.log(`  ${job.ad.label} → ${job.url}`);
+    const label = job.ads.map((a) => a.label).join("+");
+    console.log(`  ${label} → ${job.url}`);
     console.log(`    output: ${outputPath}`);
   }
 
@@ -68,7 +69,8 @@ async function main() {
     results: results.map((r) => ({
       url: r.job.url,
       post: r.job.post.url,
-      ad: r.job.ad.id,
+      ad: r.job.ads.map((a) => a.id).join("+"),
+      ads: r.job.ads.map((a) => a.id),
       success: r.success,
       eventReceived: r.eventReceived,
       gptPresent: r.gptPresent,
@@ -82,10 +84,30 @@ async function main() {
   await Bun.write(summaryPath, JSON.stringify(summary, null, 2));
   console.log(`\nDone. Summary written to ${summaryPath}`);
 
-  const adIds = [...new Set(jobs.map((j) => j.ad.id))];
-  for (const id of adIds) {
-    console.log(`  → zipping ${id} → ${config.outputDir}/${id}.zip`);
-    await Bun.$`cd ${config.outputDir} && zip -r ${id}.zip ${id}`.quiet();
+  const hasCampaign = jobs.some((j) => j.ads.some((a) => a.campaign));
+  if (hasCampaign) {
+    const campaignSlugs = [
+      ...new Set(
+        jobs
+          .map((j) => {
+            const c = j.ad.campaign ?? j.ads.find((a) => a.campaign)?.campaign;
+            return c
+              ? c.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-_]/g, "")
+              : null;
+          })
+          .filter((v): v is string => Boolean(v)),
+      ),
+    ];
+    for (const slug of campaignSlugs) {
+      console.log(`  → zipping ${slug} → ${config.outputDir}/${slug}.zip`);
+      await Bun.$`cd ${config.outputDir} && zip -r ${slug}.zip ${slug}`.quiet();
+    }
+  } else {
+    const adIds = [...new Set(jobs.map((j) => j.ads.map((a) => a.id).join("+")))];
+    for (const id of adIds) {
+      console.log(`  → zipping ${id} → ${config.outputDir}/${id}.zip`);
+      await Bun.$`cd ${config.outputDir} && zip -r ${id}.zip ${id}`.quiet();
+    }
   }
 
   await closeBrowser();

@@ -4,7 +4,8 @@
   "module": "index.ts",
   "type": "module",
   "scripts": {
-    "start": "bun run index.ts"
+    "postinstall": "bunx playwright install chromium",
+    "start": "env -u LD_LIBRARY_PATH -u NIX_LD -u NIX_LD_LIBRARY_PATH LD_PRELOAD=/lib/x86_64-linux-gnu/libstdc++.so.6 bun run index.ts"
   },
   "private": true,
   "devDependencies": {

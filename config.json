@@ -2,35 +2,54 @@
   "postSource": {
     "type": "wordpress",
     "apiUrl": "https://thmais.com.br/wp-json/wp/v2",
-    "category": "campinas",
-    "dateRange": { "start": "2026-07-01", "end": "2026-07-30" }
+    "category": "baixada-santista",
+    "dateRange": { "start": "2026-08-17", "end": "2026-08-31" }
   },
   "ads": [
     {
-      "id": "unifunec",
-      "label": "unifunec",
+      "id": "138572612467",
+      "label": "138572612467",
+      "campaign": "Vila Criativa",
       "viewport": { "width": 1920, "height": 1080 },
       "width": 300,
       "height": 250,
       "queryParams": {
-        "google_preview": "nwJKqAv49u4Ywe_N0wYwwYuD2waIAYCAgJD5uIOGMA",
+        "google_preview": "Eu2vT2K3N8UYueKP1QYwuf7E3AaIAYCAgJCV88GiMw",
         "iu": "19028704",
         "gdfp_req": "1",
-        "lineItemId": "7355256627",
-        "creativeId": "138565256007"
+        "lineItemId": "7402987372",
+        "creativeId": "138572612467"
       },
-      "startDate": "2026-07-01",
-      "endDate": "2026-07-30"
+      "startDate": "2026-08-17",
+      "endDate": "2026-08-31"
+    },
+    {
+      "id": "138572613565",
+      "label": "138572613565",
+      "campaign": "Vila Criativa",
+      "viewport": { "width": 1920, "height": 1080 },
+      "width": 970,
+      "height": 250,
+      "queryParams": {
+        "google_preview": "qbSdFeEkoX8Yj-KP1QYwj_7E3AaIAYCAgJDKtN6JUQ",
+        "iu": "19028704",
+        "gdfp_req": "1",
+        "lineItemId": "7402987372",
+        "creativeId": "138572613565"
+      },
+      "startDate": "2026-08-17",
+      "endDate": "2026-08-31"
     }
   ],
   "outputDir": "./screenshots",
   "format": "jpeg",
   "jpegQuality": 80,
   "timeout": 30000,
-  "pollTimeout": 5000,
+  "pollTimeout": 15000,
   "viewport": { "width": 1920, "height": 1080 },
   "concurrency": 3,
   "sizeTolerance": 0,
   "compression": 9,
-  "headless": true
+  "headless": true,
+  "combineMatchingAds": false
 }

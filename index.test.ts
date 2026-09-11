@@ -74,6 +74,70 @@ describe("matchAds", () => {
     const jobs = matchAds(outOfRangePost, ads);
     expect(jobs).toHaveLength(0);
   });
+
+  test("combines overlapping ads into single job with merged params", () => {
+    const overlappingAds: Ad[] = [
+      {
+        id: "ad1",
+        label: "Ad 1",
+        viewport: { width: 1920, height: 1080 },
+        width: 300,
+        height: 250,
+        queryParams: { google_preview: "aaa", creativeId: "111" },
+        startDate: "2026-06-01",
+        endDate: "2026-06-30",
+      },
+      {
+        id: "ad2",
+        label: "Ad 2",
+        viewport: { width: 1920, height: 1080 },
+        width: 300,
+        height: 250,
+        queryParams: { google_preview: "bbb", creativeId: "222" },
+        startDate: "2026-06-01",
+        endDate: "2026-06-30",
+      },
+    ];
+    const singlePost: Post[] = [{ url: "https://example.com/article", date: "2026-06-15" }];
+    const jobs = matchAds(singlePost, overlappingAds, true);
+    expect(jobs).toHaveLength(1);
+    expect(jobs[0]!.ads).toHaveLength(2);
+    expect(jobs[0]!.ads.map((a) => a.id)).toEqual(["ad1", "ad2"]);
+    expect(jobs[0]!.url).toContain("creativeId=111");
+    expect(jobs[0]!.url).toContain("creativeId=222");
+    expect(jobs[0]!.url).toContain("google_preview=aaa");
+    expect(jobs[0]!.url).toContain("google_preview=bbb");
+  });
+
+  test("creates separate jobs when combine disabled", () => {
+    const overlappingAds: Ad[] = [
+      {
+        id: "ad1",
+        label: "Ad 1",
+        viewport: { width: 1920, height: 1080 },
+        width: 300,
+        height: 250,
+        queryParams: { creativeId: "111" },
+        startDate: "2026-06-01",
+        endDate: "2026-06-30",
+      },
+      {
+        id: "ad2",
+        label: "Ad 2",
+        viewport: { width: 1920, height: 1080 },
+        width: 300,
+        height: 250,
+        queryParams: { creativeId: "222" },
+        startDate: "2026-06-01",
+        endDate: "2026-06-30",
+      },
+    ];
+    const singlePost: Post[] = [{ url: "https://example.com/article", date: "2026-06-15" }];
+    const jobs = matchAds(singlePost, overlappingAds, false);
+    expect(jobs).toHaveLength(2);
+    expect(jobs[0]!.ads).toHaveLength(1);
+    expect(jobs[1]!.ads).toHaveLength(1);
+  });
 });
 
 describe("buildOutputPath", () => {
@@ -82,6 +146,7 @@ describe("buildOutputPath", () => {
       url: "https://example.com/sports/article-1?campaign=bmw&ad_type=leaderboard",
       post: posts[0]!,
       ad: ads[0]!,
+      ads: [ads[0]!],
     };
     const result = buildOutputPath(job, config);
     expect(result).toBe(
@@ -94,10 +159,24 @@ describe("buildOutputPath", () => {
       url: "https://example.com/?foo=bar",
       post: { url: "https://example.com/", date: "2026-06-15" },
       ad: ads[0]!,
+      ads: [ads[0]!],
     };
     const result = buildOutputPath(job, config);
     expect(result).toBe(
       "./screenshots/bmw-leaderboard/15-06-2026.png",
+    );
+  });
+
+  test("builds combined path for multiple ads", () => {
+    const job: CaptureJob = {
+      url: "https://example.com/sports/article-1?campaign=bmw&campaign=audi",
+      post: posts[0]!,
+      ad: ads[0]!,
+      ads: [ads[0]!, ads[1]!],
+    };
+    const result = buildOutputPath(job, config);
+    expect(result).toBe(
+      "./screenshots/bmw-leaderboard+audi-sidebar/15-06-2026.png",
     );
   });
 });

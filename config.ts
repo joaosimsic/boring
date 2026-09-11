@@ -45,6 +45,7 @@ export async function loadConfig(path: string = "./config.json"): Promise<Config
     compression: (raw.compression as number | undefined) ?? 5,
     jpegQuality: (raw.jpegQuality as number | undefined) ?? 80,
     headless: (raw.headless as boolean | undefined) ?? true,
+    combineMatchingAds: (raw.combineMatchingAds as boolean | undefined) ?? true,
   };
 
   if (config.format !== "png" && config.format !== "jpeg") {
