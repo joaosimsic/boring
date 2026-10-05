@@ -5,6 +5,8 @@ import { fetchPostsFromWordPress } from "./wordpress";
 import { matchAds } from "./matcher";
 import { buildOutputPath, processJobs } from "./screenshotter";
 import { closeBrowser } from "./browser";
+import { dfpConfigured } from "./dfp";
+import { resolvePreviewUrls, runPreflight } from "./preview";
 
 const args = Bun.argv.slice(2);
 let configPath = "./config.json";
@@ -37,7 +39,28 @@ async function main() {
   }
   console.log("");
 
-  const jobs = matchAds(posts, config.ads, config.combineMatchingAds ?? true);
+  const needsDfp = config.ads.some((ad) => ad.preview);
+  if (needsDfp && dfpConfigured()) {
+    const reports = await runPreflight(config.ads);
+    const failing = reports.filter((r) => !r.ok);
+    if (failing.length > 0) {
+      console.error(
+        `\nPreflight failed for ${failing.length} ad(s): ${failing
+          .map((r) => r.adId)
+          .join(", ")}`,
+      );
+      console.error("Refusing to capture: the configured creative is unlikely to render.");
+      process.exit(1);
+    }
+  } else if (needsDfp) {
+    console.warn(
+      "\n[warn] Ads declare a 'preview' block but no Ad Manager credentials are configured; " +
+        "static queryParams will be used and creatives may not match.",
+    );
+  }
+
+  const previewUrls = await resolvePreviewUrls(posts, config.ads, config.concurrency);
+  const jobs = matchAds(posts, config.ads, config.combineMatchingAds ?? true, previewUrls);
 
   if (jobs.length === 0) {
     console.log("No matching jobs to process.");
@@ -66,6 +89,8 @@ async function main() {
     total: results.length,
     succeeded: results.filter((r) => r.success).length,
     failed: results.filter((r) => !r.success).length,
+    creativeMatched: results.filter((r) => r.creativeMatched).length,
+    creativeMismatched: results.filter((r) => r.success && !r.creativeMatched).length,
     results: results.map((r) => ({
       url: r.job.url,
       post: r.job.post.url,
@@ -74,11 +99,23 @@ async function main() {
       success: r.success,
       eventReceived: r.eventReceived,
       gptPresent: r.gptPresent,
+      creativeMatched: r.creativeMatched,
+      creativeMatchedBy: r.creativeMatchedBy,
+      capturedSize: r.capturedSize,
+      servedCreatives: r.servedCreatives,
       screenshotPath: r.screenshotPath,
       error: r.error,
       timestamp: r.timestamp,
     })),
   };
+
+  const mismatched = results.filter((r) => r.success && !r.creativeMatched);
+  if (mismatched.length > 0) {
+    console.warn(
+      `\n⚠ ${mismatched.length}/${results.length} screenshot(s) were saved but did NOT show the ` +
+        `requested creative. See servedCreatives in summary.json.`,
+    );
+  }
 
   const summaryPath = `${config.outputDir}/summary.json`;
   await Bun.write(summaryPath, JSON.stringify(summary, null, 2));

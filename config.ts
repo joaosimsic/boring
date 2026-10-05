@@ -31,9 +31,22 @@ export async function loadConfig(path: string = "./config.json"): Promise<Config
     }
   }
 
+  const ads = raw.ads as Config["ads"];
+  if (!Array.isArray(ads)) throw new Error("ads must be an array");
+  for (const ad of ads) {
+    if (!ad.preview) continue;
+    const preview = ad.preview as unknown as Record<string, unknown>;
+    for (const key of ["lineItemId", "creativeId"]) {
+      const value = preview[key];
+      if (typeof value !== "string" || !/^\d+$/.test(value)) {
+        throw new Error(`ads[${ad.id}].preview.${key} must be a numeric string`);
+      }
+    }
+  }
+
   const config: Config = {
     postSource: postSource as unknown as Config["postSource"],
-    ads: raw.ads as Config["ads"],
+    ads,
     outputDir: (raw.outputDir as string | undefined) ?? "./screenshots",
     format: (raw.format as Config["format"] | undefined) ?? "png",
     timeout: (raw.timeout as number | undefined) ?? 30000,
@@ -46,7 +59,22 @@ export async function loadConfig(path: string = "./config.json"): Promise<Config
     jpegQuality: (raw.jpegQuality as number | undefined) ?? 80,
     headless: (raw.headless as boolean | undefined) ?? true,
     combineMatchingAds: (raw.combineMatchingAds as boolean | undefined) ?? true,
+    dfp: raw.dfp as Config["dfp"],
+    cropToAd: (raw.cropToAd as boolean | undefined) ?? true,
   };
+
+  if (config.dfp) {
+    const { adUnitPrefix, maxWaitMs, minInkStdDev } = config.dfp;
+    if (adUnitPrefix !== undefined && typeof adUnitPrefix !== "string") {
+      throw new Error("dfp.adUnitPrefix must be a string");
+    }
+    if (maxWaitMs !== undefined && (typeof maxWaitMs !== "number" || maxWaitMs <= 0)) {
+      throw new Error("dfp.maxWaitMs must be a positive number");
+    }
+    if (minInkStdDev !== undefined && (typeof minInkStdDev !== "number" || minInkStdDev < 0)) {
+      throw new Error("dfp.minInkStdDev must be a non-negative number");
+    }
+  }
 
   if (config.format !== "png" && config.format !== "jpeg") {
     throw new Error("format must be 'png' or 'jpeg'");

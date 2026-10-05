@@ -109,8 +109,72 @@ Posts are fetched from a WordPress site via the REST API (`/wp-json/wp/v2`). One
 | `width` | number | Yes | Expected ad width in pixels |
 | `height` | number | Yes | Expected ad height in pixels |
 | `queryParams` | `Record<string, string>` | Yes | Query params appended to post URL |
+| `preview` | `{ lineItemId, creativeId }` | No | Ad Manager IDs; enables automatic preview-token generation |
 | `startDate` | string (YYYY-MM-DD) | Yes | First date this ad is valid |
 | `endDate` | string (YYYY-MM-DD) | Yes | Last date this ad is valid |
+
+### Ad Manager Preview Tokens
+
+`google_preview` tokens expire, so pasting one into `queryParams` goes stale. When an ad
+declares a `preview` block and credentials are available, the tool calls the Ad Manager API
+(`LineItemCreativeAssociationService.getPreviewUrl`) once per ad per post to generate a fresh
+preview URL, and uses that instead of `queryParams`.
+
+Before capturing, a preflight reads the line item/creative association and aborts the run if the
+creative has a size override (on-site preview does not support those) or if no association exists
+between the line item and creative.
+
+Every screenshot is verified against the creative that actually served. A mismatch is reported
+(warn, screenshot kept) via `creativeMatched` and `servedCreatives` in `summary.json`.
+
+#### Credentials
+
+Set in `.env` (gitignored):
+
+| Variable | Description |
+|---|---|
+| `DFP_NETWORK_CODE` | Ad Manager network code (required) — the number in `admanager.google.com/<code>#...`; verify with `listNetworks()` |
+| `DFP_SERVICE_ACCOUNT_JSON` | Path to a service account JSON key |
+| `DFP_CLIENT_ID` / `DFP_CLIENT_SECRET` / `DFP_REFRESH_TOKEN` | Alternative to the service account key |
+| `DFP_IMPERSONATE_EMAIL` | Optional domain-wide delegation subject |
+| `DFP_APPLICATION_NAME` | SOAP `applicationName` (default `boring`) |
+| `DFP_API_VERSION` | Ad Manager API version (default `v202602`) |
+
+#### Network code vs publisher ID
+
+These are different numbers and are easy to confuse. On this network the network code is
+`19028704`, and Ad Manager's own preview URLs carry it as `iu=19028704`. The publisher property
+code (`ca-pub-…`) is a different, much longer value. The network code goes in `DFP_NETWORK_CODE`.
+
+To confirm the code your credential can actually reach, `listNetworks()` in `dfp.ts` calls
+`NetworkService.getAllNetworks` and prints every network the service account can access.
+
+The OAuth client must be whitelisted under **Admin → API access** in the network. With no
+credentials the tool falls back to static `queryParams` and warns.
+
+#### How the creative is located and verified
+
+Preview renders report a **null `creativeId`** in `slotRenderEnded`, so matching on creative ID
+alone never works. Instead the tool:
+
+1. polls until a filled slot exists whose **ad unit path** contains `dfp.adUnitPrefix` **and**
+   whose size matches the ad;
+2. locates the ad iframe by exact size (within 4px) preferring our network's ad units;
+3. screenshots that iframe and compares it against the creative's own image asset from the Ad
+   Manager API (`primaryImageAsset.assetUrl`) at a tolerance of 18;
+4. crops the output to the ad slot **when `cropToAd` is true**; when false the screenshot is the
+   full page, and the ad element is used only for verification.
+
+A slot can still be filled by a different advertiser's ad — that is caught by the pixel
+comparison and reported as `creativeMatched: false` with the measured difference.
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `cropToAd` | boolean | No | Crop the screenshot to the ad iframe (default `true`). Set `false` for full-page screenshots |
+| `dfp.networkCode` | string | No | Network code, for reference in preflight |
+| `dfp.adUnitPrefix` | string | No | Ad unit path prefix identifying our network's slots |
+| `dfp.maxWaitMs` | number | No | How long to poll for the ad (default `45000`) |
+| `dfp.minInkStdDev` | number | No | Minimum pixel deviation to treat a frame as non-blank (default `8`) |
 
 ## Output Structure
 
@@ -132,6 +196,10 @@ A `summary.json` is written at the output root listing all capture jobs and thei
 |---|---|
 | No matching ad for post | Skipped with warning |
 | Ad event timeout | Screenshot saved, `eventReceived: false` logged in summary |
+| Wrong creative served | Screenshot saved, `creativeMatched: false` plus `servedCreatives` in summary |
+| Browser crashes mid-run | Job fails, retried once, then recorded as `success: false` |
+| Preflight finds size override or missing association | Run aborts before any capture |
+| Preview generation fails for a job | That job falls back to `queryParams`, error logged |
 | Page load error | Error logged in summary |
 | GPT not present on page | Falls back: screenshot taken, `gptPresent: false` in summary |
 | `AD_SIZE_TOLERANCE` env | Overrides `sizeTolerance` at runtime |

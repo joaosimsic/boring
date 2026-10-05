@@ -3,7 +3,7 @@
     "type": "wordpress",
     "apiUrl": "https://thmais.com.br/wp-json/wp/v2",
     "category": "baixada-santista",
-    "dateRange": { "start": "2026-08-17", "end": "2026-08-31" }
+    "dateRange": { "start": "2026-08-15", "end": "2026-08-31" }
   },
   "ads": [
     {
@@ -14,13 +14,13 @@
       "width": 300,
       "height": 250,
       "queryParams": {
-        "google_preview": "Eu2vT2K3N8UYueKP1QYwuf7E3AaIAYCAgJCV88GiMw",
         "iu": "19028704",
         "gdfp_req": "1",
         "lineItemId": "7402987372",
         "creativeId": "138572612467"
       },
-      "startDate": "2026-08-17",
+      "preview": { "lineItemId": "7402987372", "creativeId": "138572612467" },
+      "startDate": "2026-08-15",
       "endDate": "2026-08-31"
     },
     {
@@ -31,23 +31,30 @@
       "width": 970,
       "height": 250,
       "queryParams": {
-        "google_preview": "qbSdFeEkoX8Yj-KP1QYwj_7E3AaIAYCAgJDKtN6JUQ",
         "iu": "19028704",
         "gdfp_req": "1",
         "lineItemId": "7402987372",
         "creativeId": "138572613565"
       },
-      "startDate": "2026-08-17",
+      "preview": { "lineItemId": "7402987372", "creativeId": "138572613565" },
+      "startDate": "2026-08-15",
       "endDate": "2026-08-31"
     }
   ],
   "outputDir": "./screenshots",
+  "cropToAd": false,
+  "dfp": {
+    "networkCode": "19028704",
+    "adUnitPrefix": "19028704/ThMais",
+    "maxWaitMs": 45000,
+    "minInkStdDev": 8
+  },
   "format": "jpeg",
   "jpegQuality": 80,
   "timeout": 30000,
   "pollTimeout": 15000,
   "viewport": { "width": 1920, "height": 1080 },
-  "concurrency": 3,
+  "concurrency": 2,
   "sizeTolerance": 0,
   "compression": 9,
   "headless": true,

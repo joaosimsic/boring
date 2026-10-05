@@ -1,9 +1,27 @@
 import type { Post, Ad, CaptureJob } from "./types";
 
+export type PreviewUrlMap = Map<string, string>;
+
+export function previewKey(adId: string, postUrl: string): string {
+  return `${adId}|${postUrl}`;
+}
+
+function spliceParams(postUrl: string, params: URLSearchParams): string {
+  const separator = postUrl.includes("?") ? "&" : "?";
+  return `${postUrl}${separator}${params.toString()}`;
+}
+
+function jobUrl(post: Post, ad: Ad, previewUrls?: PreviewUrlMap): string {
+  const generated = previewUrls?.get(previewKey(ad.id, post.url));
+  if (generated) return generated;
+  return spliceParams(post.url, new URLSearchParams(ad.queryParams));
+}
+
 export function matchAds(
   posts: Post[],
   ads: Ad[],
   combineMatchingAds = true,
+  previewUrls?: PreviewUrlMap,
 ): CaptureJob[] {
   const jobs: CaptureJob[] = [];
 
@@ -29,15 +47,11 @@ export function matchAds(
           }
         }
       }
-      const separator = post.url.includes("?") ? "&" : "?";
-      const url = `${post.url}${separator}${combined.toString()}`;
+      const url = spliceParams(post.url, combined);
       jobs.push({ url, post, ad: matched[0]!, ads: matched });
     } else {
       for (const ad of matched) {
-        const params = new URLSearchParams(ad.queryParams).toString();
-        const separator = post.url.includes("?") ? "&" : "?";
-        const url = `${post.url}${separator}${params}`;
-        jobs.push({ url, post, ad, ads: [ad] });
+        jobs.push({ url: jobUrl(post, ad, previewUrls), post, ad, ads: [ad] });
       }
     }
   }

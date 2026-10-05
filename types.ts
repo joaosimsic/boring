@@ -3,6 +3,11 @@ export interface Post {
   date: string;
 }
 
+export interface AdPreview {
+  lineItemId: string;
+  creativeId: string;
+}
+
 export interface Ad {
   id: string;
   label: string;
@@ -13,6 +18,8 @@ export interface Ad {
   startDate: string;
   endDate: string;
   campaign?: string;
+  preview?: AdPreview;
+  referenceAssetUrl?: string;
 }
 
 export interface DateRange {
@@ -43,6 +50,13 @@ export interface Config {
   jpegQuality: number;
   headless: boolean;
   combineMatchingAds?: boolean;
+  dfp?: {
+    networkCode: string;
+    adUnitPrefix: string;
+    maxWaitMs: number;
+    minInkStdDev: number;
+  };
+  cropToAd?: boolean;
 }
 
 export interface CaptureJob {
@@ -52,6 +66,15 @@ export interface CaptureJob {
   ads: Ad[];
 }
 
+export interface ServedCreative {
+  slot: string;
+  adUnitPath?: string;
+  size?: string;
+  creativeId?: string;
+  lineItemId?: string;
+  empty: boolean;
+}
+
 export interface CaptureResult {
   job: CaptureJob;
   success: boolean;
@@ -59,5 +82,9 @@ export interface CaptureResult {
   screenshotPath?: string;
   eventReceived: boolean;
   gptPresent: boolean;
+  servedCreatives: ServedCreative[];
+  creativeMatched: boolean;
+  creativeMatchedBy: "creative-id" | "preview-slot" | "ink" | "none";
+  capturedSize?: string;
   timestamp: string;
 }
