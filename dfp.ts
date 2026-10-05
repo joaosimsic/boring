@@ -135,6 +135,37 @@ function sizeOf(node: XmlNode | undefined): string | undefined {
   return `${width}x${height}`;
 }
 
+/**
+ * Reads a `*ByStatement` response into rows.
+ *
+ * `paging` is unusable inside `FilterStatement` on the live endpoint, so a statement
+ * can come back silently clipped; `truncated` surfaces that instead of hiding it.
+ */
+function readRows<T>(
+  root: XmlNode,
+  parse: (node: XmlNode) => T,
+): StatementResult<T> {
+  const rval = first(root, "rval");
+  const rows = rval ? findAll(rval, "results").map(parse) : [];
+  const reported = rval ? Number(textOf(rval, "totalResultSetSize") ?? "0") : 0;
+  const total = Number.isFinite(reported) && reported > 0 ? reported : rows.length;
+  return { rows, totalResultSetSize: total, truncated: rows.length < total };
+}
+
+function parseCreative(rval: XmlNode): CreativeInfo {
+  const size = first(rval, "size");
+  const asset = first(rval, "primaryImageAsset");
+  return {
+    id: textOf(rval, "id"),
+    name: textOf(rval, "name"),
+    width: size ? Number(textOf(size, "width")) : undefined,
+    height: size ? Number(textOf(size, "height")) : undefined,
+    overrideSize: textOf(rval, "overrideSize") === "true",
+    advertiserId: textOf(rval, "advertiserId"),
+    assetUrl: asset ? textOf(asset, "assetUrl") : undefined,
+  };
+}
+
 function b64url(input: string | Uint8Array): string {
   const bytes = typeof input === "string" ? new TextEncoder().encode(input) : input;
   let binary = "";
@@ -447,6 +478,8 @@ export interface LineItemInfo {
   id?: string;
   name?: string;
   status?: string;
+  orderId?: string;
+  isArchived?: boolean;
   startDate?: string;
   endDate?: string;
   sizes: string[];
@@ -464,42 +497,101 @@ function isoDate(node: XmlNode | undefined): string | undefined {
   return `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
 }
 
+export interface StatementResult<T> {
+  rows: T[];
+  totalResultSetSize: number;
+  truncated: boolean;
+}
+
+/**
+ * Lists every line item in an order.
+ *
+ * The Ad Manager `paging` element cannot be used inside `FilterStatement` (the live
+ * v202602 endpoint rejects it in every position), so the statement runs unpaginated.
+ * `truncated` reports whether the server held back rows we never saw.
+ */
+export async function getLineItemsByOrderId(
+  orderId: string,
+  settings?: DfpSettings,
+): Promise<StatementResult<LineItemInfo>> {
+  const inner =
+    `<getLineItemsByStatement xmlns="{ns}"><filterStatement>` +
+    `<query>WHERE orderId = ${escapeXml(orderId)}</query>` +
+    `</filterStatement></getLineItemsByStatement>`;
+  const root = await soapCall("LineItemService", "getLineItemsByStatement", inner, settings);
+  return readRows(root, parseLineItem);
+}
+
+export interface CreativeAssociation {
+  lineItemId?: string;
+  creativeId?: string;
+  status?: string;
+  startDate?: string;
+  endDate?: string;
+}
+
+/**
+ * Lists the creatives attached to a line item.
+ *
+ * The association record carries no `sizes` and no `overrideSize` — the endpoint omits
+ * both. Rendered size and the size-override flag must be read from `CreativeService`.
+ */
+export async function getCreativeAssociationsByLineItem(
+  lineItemId: string,
+  settings?: DfpSettings,
+): Promise<StatementResult<CreativeAssociation>> {
+  const inner =
+    `<getLineItemCreativeAssociationsByStatement xmlns="{ns}"><filterStatement>` +
+    `<query>WHERE lineItemId = ${escapeXml(lineItemId)}</query>` +
+    `</filterStatement></getLineItemCreativeAssociationsByStatement>`;
+  const root = await soapCall(
+    "LineItemCreativeAssociationService",
+    "getLineItemCreativeAssociationsByStatement",
+    inner,
+    settings,
+  );
+  return readRows(root, (node) => ({
+    lineItemId: textOf(node, "lineItemId"),
+    creativeId: textOf(node, "creativeId"),
+    status: textOf(node, "status"),
+    startDate: isoDate(first(node, "startDateTime")),
+    endDate: isoDate(first(node, "endDateTime")),
+  }));
+}
+
 export async function getCreative(
   creativeId: string,
   settings?: DfpSettings,
 ): Promise<CreativeInfo | null> {
+  const creatives = await getCreativesByIds([creativeId], settings);
+  return creatives.get(creativeId) ?? null;
+}
+
+/** Fetches many creatives in one statement, keyed by creative id. */
+export async function getCreativesByIds(
+  creativeIds: string[],
+  settings?: DfpSettings,
+): Promise<Map<string, CreativeInfo>> {
+  const out = new Map<string, CreativeInfo>();
+  if (creativeIds.length === 0) return out;
+
   const inner =
     `<getCreativesByStatement xmlns="{ns}"><filterStatement>` +
-    `<query>WHERE id = ${escapeXml(creativeId)}</query>` +
+    `<query>WHERE id IN (${creativeIds.map(escapeXml).join(", ")})</query>` +
     `</filterStatement></getCreativesByStatement>`;
   const root = await soapCall("CreativeService", "getCreativesByStatement", inner, settings);
   const rval = first(root, "rval");
-  if (!rval) return null;
-  const size = first(rval, "size");
-  const asset = first(rval, "primaryImageAsset");
-  return {
-    id: textOf(rval, "id"),
-    name: textOf(rval, "name"),
-    width: size ? Number(textOf(size, "width")) : undefined,
-    height: size ? Number(textOf(size, "height")) : undefined,
-    overrideSize: textOf(rval, "overrideSize") === "true",
-    advertiserId: textOf(rval, "advertiserId"),
-    assetUrl: asset ? textOf(asset, "assetUrl") : undefined,
-  };
+  const nodes = rval ? findAll(rval, "results") : [];
+  // A single-row response may inline the creative under <rval> instead of <results>.
+  const candidates = nodes.length > 0 ? nodes : rval ? [rval] : [];
+  for (const node of candidates) {
+    const info = parseCreative(node);
+    if (info.id) out.set(info.id, info);
+  }
+  return out;
 }
 
-export async function getLineItem(
-  lineItemId: string,
-  settings?: DfpSettings,
-): Promise<LineItemInfo | null> {
-  const inner =
-    `<getLineItemsByStatement xmlns="{ns}"><filterStatement>` +
-    `<query>WHERE id = ${escapeXml(lineItemId)}</query>` +
-    `</filterStatement></getLineItemsByStatement>`;
-  const root = await soapCall("LineItemService", "getLineItemsByStatement", inner, settings);
-  const rval = first(root, "rval");
-  if (!rval) return null;
-
+function parseLineItem(rval: XmlNode): LineItemInfo {
   const customTargeting = first(rval, "customTargeting");
   const customCriteria: LineItemInfo["customCriteria"] = [];
   for (const node of customTargeting ? findAll(customTargeting, "children") : []) {
@@ -516,6 +608,8 @@ export async function getLineItem(
     id: textOf(rval, "id"),
     name: textOf(rval, "name"),
     status: textOf(rval, "status"),
+    orderId: textOf(rval, "orderId"),
+    isArchived: textOf(rval, "isArchived") === "true",
     startDate: isoDate(first(rval, "startDateTime")),
     endDate: isoDate(first(rval, "endDateTime")),
     sizes: findAll(rval, "creativePlaceholders")
@@ -525,6 +619,22 @@ export async function getLineItem(
     adUnitIds: findAll(rval, "adUnitId").map((n) => n.text.trim()),
     customCriteria,
   };
+}
+
+export async function getLineItem(
+  lineItemId: string,
+  settings?: DfpSettings,
+): Promise<LineItemInfo | null> {
+  const inner =
+    `<getLineItemsByStatement xmlns="{ns}"><filterStatement>` +
+    `<query>WHERE id = ${escapeXml(lineItemId)}</query>` +
+    `</filterStatement></getLineItemsByStatement>`;
+  const root = await soapCall("LineItemService", "getLineItemsByStatement", inner, settings);
+  const rval = first(root, "rval");
+  if (!rval) return null;
+
+  // Results may be wrapped in <results> or inlined directly under <rval>.
+  return parseLineItem(first(rval, "results") ?? rval);
 }
 
 export async function describeAssociation(

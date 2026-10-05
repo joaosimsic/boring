@@ -4,6 +4,9 @@ import {
   describeAssociation,
   dfpConfigured,
   extractPreviewParams,
+  getCreativeAssociationsByLineItem,
+  getCreativesByIds,
+  getLineItemsByOrderId,
   getPreviewUrl,
   listNetworks,
   resetTokenCache,
@@ -406,6 +409,174 @@ describe("describeAssociation response shapes", () => {
     expect(info.status).toBe("ACCEPTED");
     expect(info.size).toBe("300x250");
     expect(info.creativeName).toBe("Marca A");
+  });
+});
+
+describe("getLineItemsByOrderId", () => {
+  function lineItemXml(opts: {
+    id: string;
+    status?: string;
+    archived?: boolean;
+    start?: string;
+    end?: string;
+  }): string {
+    return (
+      `<results><orderId>4166121306</orderId><id>${opts.id}</id>` +
+      `<name>Vila Criativa</name>` +
+      `<status>${opts.status ?? "DELIVERING"}</status>` +
+      `<isArchived>${String(opts.archived ?? false)}</isArchived>` +
+      `<startDateTime><date><year>${(opts.start ?? "2026-08-17").slice(0, 4)}</year>` +
+      `<month>${(opts.start ?? "2026-08-17").slice(5, 7)}</month>` +
+      `<day>${(opts.start ?? "2026-08-17").slice(8, 10)}</day></date></startDateTime>` +
+      `<endDateTime><date><year>${(opts.end ?? "2026-08-31").slice(0, 4)}</year>` +
+      `<month>${(opts.end ?? "2026-08-31").slice(5, 7)}</month>` +
+      `<day>${(opts.end ?? "2026-08-31").slice(8, 10)}</day></date></endDateTime>` +
+      `<creativePlaceholders><size><width>970</width><height>250</height></size>` +
+      `</creativePlaceholders>` +
+      `</results>`
+    );
+  }
+
+  test("queries by orderId and parses line items", async () => {
+    const requests = tokenThenSoap(
+      soapResponse(
+        `<getLineItemsByStatementResponse><rval>` +
+          `<totalResultSetSize>1</totalResultSetSize><startIndex>0</startIndex>` +
+          lineItemXml({ id: "7402987372" }) +
+          `</rval></getLineItemsByStatementResponse>`,
+      ),
+    );
+
+    const result = await getLineItemsByOrderId("4166121306");
+
+    expect(requests[1]!.body).toContain("WHERE orderId = 4166121306");
+    expect(requests[1]!.url).toContain("LineItemService");
+    expect(result.rows).toHaveLength(1);
+    expect(result.rows[0]!.id).toBe("7402987372");
+    expect(result.rows[0]!.status).toBe("DELIVERING");
+    expect(result.rows[0]!.isArchived).toBe(false);
+    expect(result.rows[0]!.startDate).toBe("2026-08-17");
+    expect(result.rows[0]!.endDate).toBe("2026-08-31");
+    expect(result.rows[0]!.sizes).toEqual(["970x250"]);
+  });
+
+  test("reports truncated when the statement returns fewer rows than advertised", async () => {
+    tokenThenSoap(
+      soapResponse(
+        `<getLineItemsByStatementResponse><rval>` +
+          `<totalResultSetSize>50</totalResultSetSize><startIndex>0</startIndex>` +
+          lineItemXml({ id: "1" }) +
+          `</rval></getLineItemsByStatementResponse>`,
+      ),
+    );
+
+    const result = await getLineItemsByOrderId("4166121306");
+    expect(result.rows).toHaveLength(1);
+    expect(result.totalResultSetSize).toBe(50);
+    expect(result.truncated).toBe(true);
+  });
+
+  test("returns an empty result for an order with no line items", async () => {
+    tokenThenSoap(
+      soapResponse(
+        `<getLineItemsByStatementResponse><rval>` +
+          `<totalResultSetSize>0</totalResultSetSize><startIndex>0</startIndex>` +
+          `</rval></getLineItemsByStatementResponse>`,
+      ),
+    );
+
+    const result = await getLineItemsByOrderId("0");
+    expect(result.rows).toEqual([]);
+    expect(result.truncated).toBe(false);
+  });
+
+  test("surfaces a SOAP fault", async () => {
+    mockFetch((url) => {
+      if (url.includes("oauth2.googleapis.com")) {
+        return new Response(JSON.stringify({ access_token: "tok-123", expires_in: 3600 }));
+      }
+      return new Response(soapFault("UNEXECUTABLE"), { status: 200 });
+    });
+
+    expect(getLineItemsByOrderId("4166121306")).rejects.toThrow("UNEXECUTABLE");
+  });
+});
+
+describe("getCreativeAssociationsByLineItem", () => {
+  test("queries by lineItemId and parses creative ids with status", async () => {
+    const requests = tokenThenSoap(
+      soapResponse(
+        `<getLineItemCreativeAssociationsByStatementResponse><rval>` +
+          `<totalResultSetSize>2</totalResultSetSize><startIndex>0</startIndex>` +
+          `<results><lineItemId>7402987372</lineItemId>` +
+          `<creativeId>138572612467</creativeId><status>ACTIVE</status></results>` +
+          `<results><lineItemId>7402987372</lineItemId>` +
+          `<creativeId>138572613565</creativeId><status>ACTIVE</status></results>` +
+          `</rval></getLineItemCreativeAssociationsByStatementResponse>`,
+      ),
+    );
+
+    const result = await getCreativeAssociationsByLineItem("7402987372");
+
+    expect(requests[1]!.body).toContain("WHERE lineItemId = 7402987372");
+    expect(requests[1]!.url).toContain("LineItemCreativeAssociationService");
+    expect(result.rows.map((r) => r.creativeId)).toEqual([
+      "138572612467",
+      "138572613565",
+    ]);
+    expect(result.rows[0]!.status).toBe("ACTIVE");
+    expect(result.truncated).toBe(false);
+  });
+});
+
+describe("getCreativesByIds", () => {
+  test("batches ids into one IN() statement and keys results by id", async () => {
+    const requests = tokenThenSoap(
+      soapResponse(
+        `<getCreativesByStatementResponse><rval>` +
+          `<totalResultSetSize>2</totalResultSetSize><startIndex>0</startIndex>` +
+          `<results><id>138572612467</id><name>Marca A</name><size><width>300</width>` +
+          `<height>250</height></size><overrideSize>false</overrideSize>` +
+          `<primaryImageAsset><assetUrl>https://img/a.png</assetUrl></primaryImageAsset>` +
+          `</results>` +
+          `<results><id>138572613565</id><name>Marca B</name><size><width>970</width>` +
+          `<height>250</height></size><overrideSize>true</overrideSize></results>` +
+          `</rval></getCreativesByStatementResponse>`,
+      ),
+    );
+
+    const creatives = await getCreativesByIds(["138572612467", "138572613565"]);
+
+    expect(requests).toHaveLength(2);
+    expect(requests[1]!.body).toContain(
+      "WHERE id IN (138572612467, 138572613565)",
+    );
+    expect(creatives.size).toBe(2);
+    expect(creatives.get("138572612467")!.width).toBe(300);
+    expect(creatives.get("138572612467")!.assetUrl).toBe("https://img/a.png");
+    expect(creatives.get("138572613565")!.overrideSize).toBe(true);
+    expect(creatives.get("138572613565")!.assetUrl).toBeUndefined();
+  });
+
+  test("handles a creative inlined directly under rval", async () => {
+    tokenThenSoap(
+      soapResponse(
+        `<getCreativesByStatementResponse><rval>` +
+          `<id>138572612467</id><size><width>300</width><height>250</height></size>` +
+          `<overrideSize>false</overrideSize>` +
+          `</rval></getCreativesByStatementResponse>`,
+      ),
+    );
+
+    const creatives = await getCreativesByIds(["138572612467"]);
+    expect(creatives.get("138572612467")!.height).toBe(250);
+  });
+
+  test("makes no request when given no ids", async () => {
+    const requests = tokenThenSoap(soapResponse("<rval/>"));
+    const creatives = await getCreativesByIds([]);
+    expect(creatives.size).toBe(0);
+    expect(requests).toHaveLength(0);
   });
 });
 

@@ -1,46 +1,11 @@
 {
+  "orderId": "4182448031",
   "postSource": {
     "type": "wordpress",
     "apiUrl": "https://thmais.com.br/wp-json/wp/v2",
     "category": "baixada-santista",
-    "dateRange": { "start": "2026-08-15", "end": "2026-08-31" }
+    "dateRange": { "start": "2026-09-04", "end": "2026-09-30" }
   },
-  "ads": [
-    {
-      "id": "138572612467",
-      "label": "138572612467",
-      "campaign": "Vila Criativa",
-      "viewport": { "width": 1920, "height": 1080 },
-      "width": 300,
-      "height": 250,
-      "queryParams": {
-        "iu": "19028704",
-        "gdfp_req": "1",
-        "lineItemId": "7402987372",
-        "creativeId": "138572612467"
-      },
-      "preview": { "lineItemId": "7402987372", "creativeId": "138572612467" },
-      "startDate": "2026-08-15",
-      "endDate": "2026-08-31"
-    },
-    {
-      "id": "138572613565",
-      "label": "138572613565",
-      "campaign": "Vila Criativa",
-      "viewport": { "width": 1920, "height": 1080 },
-      "width": 970,
-      "height": 250,
-      "queryParams": {
-        "iu": "19028704",
-        "gdfp_req": "1",
-        "lineItemId": "7402987372",
-        "creativeId": "138572613565"
-      },
-      "preview": { "lineItemId": "7402987372", "creativeId": "138572613565" },
-      "startDate": "2026-08-15",
-      "endDate": "2026-08-31"
-    }
-  ],
   "outputDir": "./screenshots",
   "cropToAd": false,
   "dfp": {

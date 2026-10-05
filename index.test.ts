@@ -38,7 +38,7 @@ const config: Config = {
     category: "news",
     dateRange: { start: "2026-06-01", end: "2026-07-31" },
   },
-  ads,
+  orderId: "4166121306",
   outputDir: "./screenshots",
   format: "png",
   timeout: 30000,

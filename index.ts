@@ -7,11 +7,13 @@ import { buildOutputPath, processJobs } from "./screenshotter";
 import { closeBrowser } from "./browser";
 import { dfpConfigured } from "./dfp";
 import { resolvePreviewUrls, runPreflight } from "./preview";
+import { discoverAds, formatSkipped } from "./discover";
 
 const args = Bun.argv.slice(2);
 let configPath = "./config.json";
 let dryRun = false;
 let outputDir: string | null = null;
+let maxCreatives = 0;
 
 for (let i = 0; i < args.length; i++) {
   const arg = args[i];
@@ -21,6 +23,8 @@ for (let i = 0; i < args.length; i++) {
     dryRun = true;
   } else if (arg === "--output" && i + 1 < args.length) {
     outputDir = args[++i]!;
+  } else if (arg === "--max-creatives" && i + 1 < args.length) {
+    maxCreatives = Number.parseInt(args[++i]!, 10) || 0;
   }
 }
 
@@ -31,7 +35,45 @@ async function main() {
     config.outputDir = outputDir;
   }
 
-  console.log(`Fetching posts from ${config.postSource.apiUrl}...`);
+  if (!dfpConfigured()) {
+    console.error(
+      "Ad Manager credentials are not configured, so line items cannot be discovered.\n" +
+        "Set DFP_NETWORK_CODE plus either DFP_SERVICE_ACCOUNT_JSON or " +
+        "DFP_CLIENT_ID/DFP_CLIENT_SECRET/DFP_REFRESH_TOKEN.",
+    );
+    process.exit(1);
+  }
+
+  console.log(`Discovering creatives in order ${config.orderId}...`);
+  const discovery = await discoverAds(config.orderId, config, { maxCreatives });
+  console.log(
+    `Found ${discovery.ads.length} creative(s) across ${discovery.lineItemsSeen} line item(s).`,
+  );
+  for (const ad of discovery.ads) {
+    console.log(
+      `  ${ad.campaign ?? "?"} · ${ad.width}x${ad.height} · ${ad.id} ` +
+        `(${ad.preview?.lineItemId}) ${ad.startDate} → ${ad.endDate}`,
+    );
+  }
+  if (discovery.truncated) {
+    console.warn(
+      "[warn] The Ad Manager statement returned fewer line items than it reported; " +
+        "some line items in this order were not examined.",
+    );
+  }
+  if (discovery.skipped.length > 0) {
+    console.log(`\nSkipped ${discovery.skipped.length}:`);
+    for (const line of formatSkipped(discovery.skipped)) {
+      console.log(`  · ${line}`);
+    }
+  }
+
+  if (discovery.ads.length === 0) {
+    console.error("\nNo capturable creatives were discovered. Nothing to do.");
+    process.exit(1);
+  }
+
+  console.log(`\nFetching posts from ${config.postSource.apiUrl}...`);
   const posts = await fetchPostsFromWordPress(config.postSource);
   console.log(`Got ${posts.length} post(s) (one per day):`);
   for (const post of posts) {
@@ -39,28 +81,25 @@ async function main() {
   }
   console.log("");
 
-  const needsDfp = config.ads.some((ad) => ad.preview);
-  if (needsDfp && dfpConfigured()) {
-    const reports = await runPreflight(config.ads);
-    const failing = reports.filter((r) => !r.ok);
-    if (failing.length > 0) {
-      console.error(
-        `\nPreflight failed for ${failing.length} ad(s): ${failing
-          .map((r) => r.adId)
-          .join(", ")}`,
-      );
-      console.error("Refusing to capture: the configured creative is unlikely to render.");
+  const reports = await runPreflight(discovery.ads);
+  const failing = reports.filter((r) => !r.ok);
+  if (failing.length > 0) {
+    console.warn(
+      `\n⚠ Preflight found blocking problems for ${failing.length} creative(s); ` +
+        "they will be skipped and the rest still captured.",
+    );
+    const capturable = new Set(
+      reports.filter((r) => r.ok).map((r) => r.adId),
+    );
+    discovery.ads = discovery.ads.filter((ad) => capturable.has(ad.id));
+    if (discovery.ads.length === 0) {
+      console.error("Every discovered creative failed preflight. Nothing to capture.");
       process.exit(1);
     }
-  } else if (needsDfp) {
-    console.warn(
-      "\n[warn] Ads declare a 'preview' block but no Ad Manager credentials are configured; " +
-        "static queryParams will be used and creatives may not match.",
-    );
   }
 
-  const previewUrls = await resolvePreviewUrls(posts, config.ads, config.concurrency);
-  const jobs = matchAds(posts, config.ads, config.combineMatchingAds ?? true, previewUrls);
+  const previewUrls = await resolvePreviewUrls(posts, discovery.ads, config.concurrency);
+  const jobs = matchAds(posts, discovery.ads, config.combineMatchingAds ?? true, previewUrls);
 
   if (jobs.length === 0) {
     console.log("No matching jobs to process.");
@@ -86,7 +125,9 @@ async function main() {
 
   const summary = {
     timestamp: new Date().toISOString(),
+    orderId: config.orderId,
     total: results.length,
+    skipped: discovery.skipped,
     succeeded: results.filter((r) => r.success).length,
     failed: results.filter((r) => !r.success).length,
     creativeMatched: results.filter((r) => r.creativeMatched).length,

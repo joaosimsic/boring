@@ -6,7 +6,11 @@ export async function loadConfig(path: string = "./config.json"): Promise<Config
   const file = Bun.file(path);
   const raw = await file.json() as Record<string, unknown>;
 
-  if (!raw.ads || !Array.isArray(raw.ads)) throw new Error("ads must be an array");
+  if (typeof raw.orderId !== "string" || !/^\d+$/.test(raw.orderId)) {
+    throw new Error(
+      "orderId must be a numeric string (the Ad Manager order whose line items should be captured)",
+    );
+  }
   if (!raw.postSource || typeof raw.postSource !== "object") {
     throw new Error("postSource must be an object");
   }
@@ -31,22 +35,9 @@ export async function loadConfig(path: string = "./config.json"): Promise<Config
     }
   }
 
-  const ads = raw.ads as Config["ads"];
-  if (!Array.isArray(ads)) throw new Error("ads must be an array");
-  for (const ad of ads) {
-    if (!ad.preview) continue;
-    const preview = ad.preview as unknown as Record<string, unknown>;
-    for (const key of ["lineItemId", "creativeId"]) {
-      const value = preview[key];
-      if (typeof value !== "string" || !/^\d+$/.test(value)) {
-        throw new Error(`ads[${ad.id}].preview.${key} must be a numeric string`);
-      }
-    }
-  }
-
   const config: Config = {
     postSource: postSource as unknown as Config["postSource"],
-    ads,
+    orderId: raw.orderId,
     outputDir: (raw.outputDir as string | undefined) ?? "./screenshots",
     format: (raw.format as Config["format"] | undefined) ?? "png",
     timeout: (raw.timeout as number | undefined) ?? 30000,

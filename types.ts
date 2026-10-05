@@ -37,7 +37,7 @@ export interface PostSource {
 
 export interface Config {
   postSource: PostSource;
-  ads: Ad[];
+  orderId: string;
   outputDir: string;
   format: "png" | "jpeg";
   timeout: number;

@@ -1,6 +1,15 @@
 # AdMatch Screenshot Tool
 
-Capture full-page screenshots of every valid (post, ad) pair. Each job navigates to the post URL with ad-specific query params, waits for the GPT `slotRenderEnded` event, and captures a full-page screenshot.
+Point it at an Ad Manager **order** and it discovers the line items and creatives itself,
+then captures a full-page screenshot of every valid (post, creative) pair. Each job navigates
+to the post URL with ad-specific query params, waits for the GPT `slotRenderEnded` event, and
+captures a full-page screenshot.
+
+You no longer hand-write an `ads` array. The tool reads the hierarchy from the Ad Manager API:
+
+```
+orderId → line items → creative associations → creatives (size, image asset)
+```
 
 ## Usage
 
@@ -13,8 +22,9 @@ bun index.ts [options]
 | Flag | Default | Description |
 |---|---|---|
 | `--config` | `./config.json` | Path to config file |
-| `--dry-run` | false | Print matched jobs + output paths, do not capture |
+| `--dry-run` | false | Print discovered creatives, matched jobs and output paths; capture nothing |
 | `--output` | from config | Override output directory |
+| `--max-creatives` | `0` (no cap) | Stop after this many creatives — a guard against large orders |
 
 ### Example
 
@@ -23,36 +33,20 @@ bun index.ts
 bun index.ts --config ./my-config.json
 bun index.ts --dry-run
 bun index.ts --output ./my-screenshots
+bun index.ts --max-creatives 4
 ```
 
 ### Example Config
 
 ```json
 {
+  "orderId": "4166121306",
   "postSource": {
     "type": "wordpress",
     "apiUrl": "https://thmais.com.br/wp-json/wp/v2",
     "category": "campinas",
     "dateRange": { "start": "2026-07-01", "end": "2026-07-30" }
   },
-  "ads": [
-    {
-      "id": "unifunec",
-      "label": "unifunec",
-      "viewport": { "width": 1920, "height": 1080 },
-      "width": 300,
-      "height": 250,
-      "queryParams": {
-        "google_preview": "nwJKqAv49u4Ywe_N0wYwwYuD2waIAYCAgJD5uIOGMA",
-        "iu": "19028704",
-        "gdfp_req": "1",
-        "lineItemId": "7355256627",
-        "creativeId": "138565256007"
-      },
-      "startDate": "2026-07-01",
-      "endDate": "2026-07-30"
-    }
-  ],
   "outputDir": "./screenshots",
   "format": "jpeg",
   "jpegQuality": 80,
@@ -67,12 +61,51 @@ bun index.ts --output ./my-screenshots
 }
 ```
 
+## Why an order and not a campaign
+
+GAM campaigns are not reachable from the API version this tool uses. On `v202602`
+(the default, override with `DFP_API_VERSION`):
+
+- there is no `CampaignService`
+- `LineItem` has no `campaignId` field, and filtering `WHERE campaignId = …` faults with `UNEXECUTABLE`
+
+The reachable hierarchy is **Advertiser → Order → LineItem → Creative**, so `orderId` is the
+top-level identifier you can hand over. In most setups an order maps closely enough to a
+campaign that this is the same workflow.
+
+## What discovery does
+
+For each line item in the order, the tool keeps those that are not archived, whose status is
+`DELIVERING`, `PAUSED` or `COMPLETED`, and whose flight overlaps `postSource.dateRange`.
+`COMPLETED` line items are deliberately included: on-site preview still serves them, so
+excluding them would stop capturing creatives a hand-written list would have covered.
+
+Each surviving creative becomes one capture job, sized from `Creative.size` and dated from the
+line item's flight **intersected** with `postSource.dateRange`. The line item name becomes the
+output folder, so `screenshots/<line-item-name>/` replaces a hand-typed campaign label.
+
+Anything dropped is reported before capture rather than silently:
+
+| Skipped | Why |
+|---|---|
+| Archived line item | `isArchived` |
+| `DRAFT` / `ARCHIVED` line item | status not deliverable |
+| Line item outside the date range | flight does not overlap `postSource.dateRange` |
+| Creative with a size override | on-site preview cannot pin it |
+| Creative with no pixel size | non-image / programmatic creative |
+| Creative that no longer exists | association points at an invisible creative |
+
+Run with `--dry-run` first on a large order: one order can hold many line items × many
+creatives, and every creative is captured once per post per day.
+
+`summary.json` records `orderId` and the full `skipped` list alongside the capture results.
+
 ## Config Reference
 
 | Field | Type | Default | Description |
 |---|---|---|---|
+| `orderId` | string (numeric) | — | **Required.** Ad Manager order whose line items should be captured |
 | `postSource` | `{ type, apiUrl, category, dateRange }` | — | Post source configuration (see below) |
-| `ads` | `Ad[]` | — | Ad configurations (see below) |
 | `outputDir` | string | `./screenshots` | Screenshot output directory |
 | `format` | `png` \| `jpeg` | `png` | Screenshot image format |
 | `jpegQuality` | number (0–100) | `80` | JPEG quality when `format` is `jpeg` |
@@ -84,6 +117,7 @@ bun index.ts --output ./my-screenshots
 | `sizeTolerance` | number | `0` | Px tolerance for ad size matching |
 | `compression` | number (0–9) | `5` | PNG compression level (0 disables re-compression) |
 | `headless` | boolean | `true` | Run browser in headless mode |
+| `combineMatchingAds` | boolean | `true` | Merge creatives sharing a date range into one page load |
 
 `sizeTolerance` can be overridden at runtime via `AD_SIZE_TOLERANCE` env var.
 
@@ -99,30 +133,16 @@ Posts are fetched from a WordPress site via the REST API (`/wp-json/wp/v2`). One
 | `dateRange` | `{ start, end }` | Yes | Fetch only posts published between `start` and `end` (YYYY-MM-DD) |
 | `perPage` | number | No | Posts per API page (default `100`) |
 
-### Per-ad Fields
-
-| Field | Type | Required | Description |
-|---|---|---|---|
-| `id` | string | Yes | Ad identifier; used as directory and zip filename |
-| `label` | string | Yes | Human-readable label for console output |
-| `viewport` | `{ width, height }` | No | Per-ad viewport override (falls back to global) |
-| `width` | number | Yes | Expected ad width in pixels |
-| `height` | number | Yes | Expected ad height in pixels |
-| `queryParams` | `Record<string, string>` | Yes | Query params appended to post URL |
-| `preview` | `{ lineItemId, creativeId }` | No | Ad Manager IDs; enables automatic preview-token generation |
-| `startDate` | string (YYYY-MM-DD) | Yes | First date this ad is valid |
-| `endDate` | string (YYYY-MM-DD) | Yes | Last date this ad is valid |
-
 ### Ad Manager Preview Tokens
 
-`google_preview` tokens expire, so pasting one into `queryParams` goes stale. When an ad
-declares a `preview` block and credentials are available, the tool calls the Ad Manager API
-(`LineItemCreativeAssociationService.getPreviewUrl`) once per ad per post to generate a fresh
-preview URL, and uses that instead of `queryParams`.
+`google_preview` tokens expire, so a pasted token goes stale. For every discovered creative the
+tool calls the Ad Manager API (`LineItemCreativeAssociationService.getPreviewUrl`) once per
+creative per post to generate a fresh preview URL, and uses that instead of `queryParams`.
 
-Before capturing, a preflight reads the line item/creative association and aborts the run if the
-creative has a size override (on-site preview does not support those) or if no association exists
-between the line item and creative.
+Before capturing, a preflight reads the line item/creative association and checks the creative's
+size and targeting. A creative with a size override cannot be pinned by on-site preview, so it is
+skipped; **the run is not aborted** — remaining creatives still capture. A run only stops early if
+*every* discovered creative fails preflight.
 
 Every screenshot is verified against the creative that actually served. A mismatch is reported
 (warn, screenshot kept) via `creativeMatched` and `servedCreatives` in `summary.json`.
@@ -149,8 +169,9 @@ code (`ca-pub-…`) is a different, much longer value. The network code goes in 
 To confirm the code your credential can actually reach, `listNetworks()` in `dfp.ts` calls
 `NetworkService.getAllNetworks` and prints every network the service account can access.
 
-The OAuth client must be whitelisted under **Admin → API access** in the network. With no
-credentials the tool falls back to static `queryParams` and warns.
+The OAuth client must be whitelisted under **Admin → API access** in the network. Credentials are
+required: discovery reads the order from the API, so without them the tool cannot build a job
+list and exits with a message.
 
 #### How the creative is located and verified
 
@@ -180,26 +201,44 @@ comparison and reported as `creativeMatched: false` with the measured difference
 
 ```
 screenshots/
-  <ad-id>/
-    <dd>-<mm>-<yyyy>.<format>
+  <line-item-name>/
+    <width>x<height>-<creative-id>-<dd>-<mm>-<yyyy>.<format>
   summary.json
-  <ad-id>.zip
+  <line-item-name>.zip
 ```
 
-Path template: `{outputDir}/{ad-id}/{dd}-{mm}-{yyyy}.{format}`
+Path template: `{outputDir}/{line-item-name}/{width}x{height}-{creative-id}-{dd}-{mm}-{yyyy}.{format}`
 
-A `summary.json` is written at the output root listing all capture jobs and their outcomes. A `.zip` archive is also created per ad ID.
+The folder and `.zip` are named after the **line item**, so two line items in the same order do
+not collide. A `summary.json` is written at the output root listing the `orderId`, every skipped
+creative with its reason, and all capture jobs with their outcomes.
 
 ## Edge Cases
 
 | Scenario | Behavior |
 |---|---|
-| No matching ad for post | Skipped with warning |
+| Order has no capturable creative | Exits before capture with the skip reasons |
+| No creative matches a post's date | Post skipped with warning |
+| Line item flight misses the date range | Line item filtered out before any API call per creative |
+| Creative has a size override | Skipped during discovery, reason in `summary.json` |
+| Creative no longer exists | Skipped during discovery, reason in `summary.json` |
+| Preflight finds a blocking problem | That creative skipped; the rest still capture |
+| Statement returns fewer rows than advertised | Warning printed; `truncated` reflects it |
+| `--max-creatives` reached | Remaining creatives skipped, reason in `summary.json` |
 | Ad event timeout | Screenshot saved, `eventReceived: false` logged in summary |
 | Wrong creative served | Screenshot saved, `creativeMatched: false` plus `servedCreatives` in summary |
 | Browser crashes mid-run | Job fails, retried once, then recorded as `success: false` |
-| Preflight finds size override or missing association | Run aborts before any capture |
 | Preview generation fails for a job | That job falls back to `queryParams`, error logged |
 | Page load error | Error logged in summary |
 | GPT not present on page | Falls back: screenshot taken, `gptPresent: false` in summary |
 | `AD_SIZE_TOLERANCE` env | Overrides `sizeTolerance` at runtime |
+
+## Known API constraints
+
+Two limits of the Ad Manager SOAP API shape this tool, and are worth knowing before changing it:
+
+- **No campaign lookup.** `CampaignService` does not exist on `v202602` and `LineItem` carries no
+  `campaignId`, so `orderId` is the shallowest identifier available.
+- **No statement paging.** `paging` is rejected inside `FilterStatement` by the live endpoint, so
+  statements run unpaginated. A very large order could return fewer line items than it reports;
+  discovery compares the two and warns via `truncated` rather than silently capturing a subset.
