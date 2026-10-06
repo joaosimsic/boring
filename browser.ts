@@ -1,4 +1,5 @@
 import { chromium, type Browser } from "playwright";
+import stealthPlugin from "puppeteer-extra-plugin-stealth";
 
 let browser: Browser | null = null;
 
@@ -16,7 +17,10 @@ export async function getBrowser(headless: boolean = true): Promise<Browser> {
       delete process.env[key];
     }
     try {
-      browser = await chromium.launch({
+      const { chromium: extraChromium } = await import("playwright-extra");
+      const stealth = stealthPlugin();
+      const patchedChromium = extraChromium.use(stealth);
+      browser = await patchedChromium.launch({
         headless,
         args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
       });

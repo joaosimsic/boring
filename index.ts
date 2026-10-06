@@ -179,6 +179,12 @@ async function main() {
     for (const slug of campaignSlugs) {
       console.log(`  → zipping ${slug} → ${config.outputDir}/${slug}.zip`);
       await Bun.$`cd ${config.outputDir} && zip -r ${slug}.zip ${slug}`.quiet();
+      const zipSize = await Bun.file(`${config.outputDir}/${slug}.zip`).size;
+      if (zipSize > 20 * 1024 * 1024) {
+        console.warn(
+          `  ⚠ ${slug}.zip is ${(zipSize / 1024 / 1024).toFixed(1)}MB — exceeds 20MB email limit`,
+        );
+      }
     }
   } else {
     const adIds = [...new Set(jobs.map((j) => j.ads.map((a) => a.id).join("+")))];
